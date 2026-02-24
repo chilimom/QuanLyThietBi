@@ -49,6 +49,7 @@ const ModalCreateVT = ({ render }) => {
           { PhanXuongId: 2, TenPhanXuong: 'Nhà máy Luyện Gang 2' },
           { PhanXuongId: 3, TenPhanXuong: 'Nhà máy Nhiệt điện 1' },
           { PhanXuongId: 4, TenPhanXuong: 'Nhà máy Nhiệt điện 2' },
+          { PhanXuongId: 5, TenPhanXuong: 'Xử lý nước' },
         ])
       }
     }
