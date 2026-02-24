@@ -504,7 +504,7 @@ const ModalEditVT = ({ render, editNhanVien }) => {
                   Đang xử lý...
                 </>
               ) : (
-                '💾 Cập nhật vật tư'
+                '💾 Cập Nhật Lệnh Bảo Trì'
               )}
             </button>
           </div>
