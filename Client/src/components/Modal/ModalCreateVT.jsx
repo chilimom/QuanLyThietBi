@@ -1,11 +1,32 @@
 import { memo, useState, useEffect } from 'react'
-import { apiCreateVT } from '../../apis/vattu'
+import { apiCreateVT, phanXuongAPI } from '../../apis/vattu'
 import { InputForm, TextAreaForm } from '../'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { useDispatch } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { RxCross2 } from 'react-icons/rx'
+
+
+const DEFAULT_PHAN_XUONG_LIST = [
+  { PhanXuongId: 1, TenPhanXuong: 'Nha may Luyen Gang 1' },
+  { PhanXuongId: 2, TenPhanXuong: 'Nha may Luyen Gang 2' },
+  { PhanXuongId: 3, TenPhanXuong: 'Nha may Nhiet dien 1' },
+  { PhanXuongId: 4, TenPhanXuong: 'Nha may Nhiet dien 2' },
+  { PhanXuongId: 5, TenPhanXuong: 'Xu Ly Nuoc' },
+  { PhanXuongId: 6, TenPhanXuong: 'Xuong Nang Luong' },
+]
+
+const normalizePhanXuongList = (list) => {
+  if (!Array.isArray(list)) return []
+
+  return list
+    .map((item) => ({
+      PhanXuongId: Number(item?.PhanXuongId ?? item?.phanXuongId ?? 0),
+      TenPhanXuong: item?.TenPhanXuong ?? item?.tenPhanXuong ?? '',
+    }))
+    .filter((item) => item.PhanXuongId > 0)
+}
 
 const ModalCreateVT = ({ render }) => {
   const dispatch = useDispatch()
@@ -30,28 +51,21 @@ const ModalCreateVT = ({ render }) => {
     }
   })
 
-  // Load danh sách phân xưởng
+  // Load danh sach phan xuong
   useEffect(() => {
     const loadPhanXuong = async () => {
       try {
-        const response = await fetch('http://localhost:5134/api/PhanXuong/getAll')
-        if (response.ok) {
-          const data = await response.json()
-          if (Array.isArray(data)) {
-            setPhanXuongList(data)
-          }
+        const response = await phanXuongAPI.getAll()
+        const rawData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : []
+        const normalizedData = normalizePhanXuongList(rawData)
+        if (normalizedData.length > 0) {
+          setPhanXuongList(normalizedData)
+          return
         }
+        setPhanXuongList(normalizePhanXuongList(DEFAULT_PHAN_XUONG_LIST))
       } catch (error) {
-        console.error('Lỗi load phân xưởng:', error)
-        // Fallback data
-        setPhanXuongList([
-          { PhanXuongId: 1, TenPhanXuong: 'Nhà máy Luyện Gang 1' },
-          { PhanXuongId: 2, TenPhanXuong: 'Nhà máy Luyện Gang 2' },
-          { PhanXuongId: 3, TenPhanXuong: 'Nhà máy Nhiệt điện 1' },
-          { PhanXuongId: 4, TenPhanXuong: 'Nhà máy Nhiệt điện 2' },
-          { PhanXuongId: 5, TenPhanXuong: 'Xử Lý Nước' },
-          { PhanXuongId: 6, TenPhanXuong: 'Xưởng Năng Lượng' },
-        ])
+        console.error('Loi load phan xuong:', error)
+        setPhanXuongList(normalizePhanXuongList(DEFAULT_PHAN_XUONG_LIST))
       }
     }
     loadPhanXuong()

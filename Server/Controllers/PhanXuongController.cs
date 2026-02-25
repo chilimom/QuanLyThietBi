@@ -57,7 +57,12 @@ namespace Server.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Dữ liệu không hợp lệ!");
 
-            await _context.PhanXuongs.AddAsync(model);
+            if (string.IsNullOrWhiteSpace(model.TenPhanXuong))
+                return BadRequest("Tên phân xưởng không được để trống!");
+
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"INSERT INTO PhanXuong (TenPhanXuong) VALUES ({model.TenPhanXuong})"
+            );
             await _context.SaveChangesAsync();
 
             return Ok(new

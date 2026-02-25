@@ -156,8 +156,7 @@ namespace Server.Models
             {
                 entity.HasKey(e => e.PhanXuongId);
                 entity.ToTable("PhanXuong");
-
-                entity.Property(e => e.PhanXuongId).ValueGeneratedNever();
+                entity.Property(e => e.PhanXuongId).ValueGeneratedOnAdd();
                 entity.Property(e => e.TenPhanXuong).HasMaxLength(100);
             });
 

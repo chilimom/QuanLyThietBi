@@ -63,12 +63,25 @@ const VatTuBaoTri = () => {
       .filter((item) => item.phanXuongId > 0)
   }
 
+  const loadPhanXuong = useCallback(async () => {
+    try {
+      const response = await phanXuongAPI.getAll()
+      const rawData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : []
+      setPhanXuongList(normalizePhanXuongList(rawData))
+    } catch (error) {
+      console.error('? L?i load ph�n xu?ng:', error)
+      setPhanXuongList([])
+    }
+  }, [])
+
+
   // ================= REFRESH LISTENER =================
   useEffect(() => {
     const handleRefreshList = () => {
       console.log('🔄 Nhận được refresh event từ ModalCreateVT')
       setUpdate(prev => !prev)
       setLastRefresh(new Date())
+      loadPhanXuong()
     }
     
     window.addEventListener('refresh-vattu-list', handleRefreshList)
@@ -76,21 +89,11 @@ const VatTuBaoTri = () => {
     return () => {
       window.removeEventListener('refresh-vattu-list', handleRefreshList)
     }
-  }, [])
+  }, [loadPhanXuong])
 
   useEffect(() => {
-    const loadPhanXuong = async () => {
-      try {
-        const response = await phanXuongAPI.getAll()
-        const rawData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : []
-        setPhanXuongList(normalizePhanXuongList(rawData))
-      } catch (error) {
-        console.error('❌ Lỗi load phân xưởng:', error)
-        setPhanXuongList([])
-      }
-    }
     loadPhanXuong()
-  }, [])
+  }, [loadPhanXuong])
 
   // ================= LOAD VẬT TƯ =================
   const fetchVatTu = useCallback(async () => {
@@ -425,6 +428,7 @@ const VatTuBaoTri = () => {
     console.log('🔄 Manual refresh triggered')
     setUpdate(prev => !prev)
     setLastRefresh(new Date())
+      loadPhanXuong()
     toast.info('Đang làm mới dữ liệu...')
   }
 
@@ -818,4 +822,5 @@ const VatTuBaoTri = () => {
 }
 
 export default VatTuBaoTri
+
 
