@@ -38,6 +38,19 @@ public class XuatVatTuController : ControllerBase
         public List<XuatVatTuItem> VatTus { get; set; }
     }
 
+    private static bool TryGetPropertyIgnoreCase(JsonElement element, string propertyName, out JsonElement value)
+    {
+        if (element.TryGetProperty(propertyName, out value))
+            return true;
+
+        var pascalName = char.ToUpperInvariant(propertyName[0]) + propertyName.Substring(1);
+        if (element.TryGetProperty(pascalName, out value))
+            return true;
+
+        value = default;
+        return false;
+    }
+
     // =========================
     // POST: api/XuatVatTu/bulk
     // =========================
@@ -103,10 +116,16 @@ public class XuatVatTuController : ControllerBase
             return NotFound("Không tìm thấy vật tư xuất");
 
         // ✅ ĐỌC JSON ĐÚNG CÁCH
-        if (body.TryGetProperty("soLuong", out var soLuongProp))
+        if (TryGetPropertyIgnoreCase(body, "maVT", out var maVTProp))
+            entity.MaVT = maVTProp.GetString();
+
+        if (TryGetPropertyIgnoreCase(body, "tenVT", out var tenVTProp))
+            entity.TenVT = tenVTProp.GetString();
+
+        if (TryGetPropertyIgnoreCase(body, "soLuong", out var soLuongProp))
             entity.SoLuong = soLuongProp.GetInt32();
 
-        if (body.TryGetProperty("ghiChu", out var ghiChuProp))
+        if (TryGetPropertyIgnoreCase(body, "ghiChu", out var ghiChuProp))
             entity.GhiChu = ghiChuProp.GetString();
 
         await _context.SaveChangesAsync();
@@ -115,8 +134,31 @@ public class XuatVatTuController : ControllerBase
         {
             success = true,
             id = entity.Id,
+            maVT = entity.MaVT,
+            tenVT = entity.TenVT,
             soLuong = entity.SoLuong,
             ghiChu = entity.GhiChu
+        });
+    }
+
+    [HttpDelete("{id}")]
+    [HttpDelete("delete/{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> DeleteXuatVatTu(int id)
+    {
+        var entity = await _context.XuatVatTus
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (entity == null)
+            return NotFound("Khong tim thay vat tu xuat");
+
+        _context.XuatVatTus.Remove(entity);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            success = true,
+            id
         });
     }
 

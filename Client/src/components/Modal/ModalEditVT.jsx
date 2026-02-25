@@ -1,226 +1,30 @@
-// import { memo, useEffect } from 'react'
-// import { apiEditVT } from '../../apis'
-// import { Button, InputForm, TextAreaForm } from '../'
-// import { useForm } from 'react-hook-form'
-// import { toast } from 'react-toastify'
-// import { useDispatch } from 'react-redux'
-// import { showModal } from '../../store/loading/loadingSlice'
-// import { RxCross2 } from 'react-icons/rx'
-// const ModalEditVT = ({ render, editNhanVien }) => {
-//   const dispatch = useDispatch()
-//   // const [phongbans, setPhongBan] = useState(null);
-//   //   console.log('dat', editNhanVien);
-//   const {
-//     register,
-//     formState: { errors },
-//     reset,
-//     handleSubmit,
-//   } = useForm()
 
-//   useEffect(() => {
-//     if (editNhanVien) {
-//       const formattedDate = editNhanVien.ngayTao ? editNhanVien.ngayTao.split('T')[0] : ''
-//       console.log('Dữ liệu editNhanVien:', editNhanVien)
-//       reset({
-//         id: editNhanVien.id || '',
-//         Order: editNhanVien.order || '',
-//         eq: editNhanVien.eq || '',
-//         MaVT: editNhanVien.maVT || '',
-//         TenVT: editNhanVien.tenVT || '',
-//         DonVi: editNhanVien.donVi || '',
-//         SoLuong: editNhanVien.soLuong || '',
-//         NgayTao: formattedDate,
-//         PrMua: editNhanVien.prMua || '',
-//         GhiChu: editNhanVien.ghiChu || '',
-//       })
-//     }
-//   }, [editNhanVien, reset])
-//   // const handleEditVatTu = async (data) => {
-//   //   // console.log('edit', data, editNhanVien?.id);
-//   //   const responseTB = await apiEditVT(editNhanVien?.id, data)
-//   //   if (responseTB.status) {
-//   //     toast.success(responseTB.message)
-//   //     reset()
-//   //     render()
-//   //     dispatch(showModal({ isShowModal: false, modalChildren: null }))
-//   //   } else {
-//   //     toast.error(responseTB.message)
-//   //   }
-//   // }
-//   // 🔴 SỬA: gắn PhanXuongId trước khi gọi API
-// const handleEditVatTu = async (data) => {
-//   if (!phanXuongId) {
-//     toast.error('Chưa chọn phân xưởng')
-//     return
-//   }
-
-//   const payload = {
-//     ...data,
-//     PhanXuongId: phanXuongId // 🔴 DÒNG QUAN TRỌNG NHẤT
-//   }
-
-//   const responseTB = await apiEditVT(editNhanVien?.id, payload)
-
-//   if (responseTB.status) {
-//     toast.success(responseTB.message)
-//     reset()
-//     render()
-//     dispatch(showModal({ isShowModal: false, modalChildren: null }))
-//   } else {
-//     toast.error(responseTB.message)
-//   }
-// }
-
-//   const onClose = () => {
-//     // setEditNhanVien(null);
-//     dispatch(showModal({ isShowModal: false, modalChildren: null }))
-//   }
-//   return (
-//     <div
-//       className="relative w-full lg:w-[900px] h-[950px] bg-white border border-gray-200 rounded-xl shadow-lg 
-//                  flex flex-col items-center justify-center p-6 animate-slide-down text-[13px] text-gray-700 font-normal"
-//       onClick={(e) => e.stopPropagation()}
-//     >
-//       <div className="absolute p-[2px] flex items-center right-4 top-4 bg-error border border-gray-300 shadow-sm hover:bg-red-600 rounded-md">
-//         <button onClick={onClose}>
-//           <RxCross2 size={26} color="white" />
-//         </button>
-//       </div>
-//       <div className="w-2/3 px-2 mx-auto mt-5 ">
-//         <form className="flex flex-col gap-2" onSubmit={handleSubmit(handleEditVatTu)}>
-//           <InputForm
-//             label="ID"
-//             register={register} 
-//             errors={errors}
-//             id="id"
-//             validate={{
-//               required: 'vui lòng điền tên thiết bị',
-//             }}
-//             placeholder="@ tên thiết bị"
-//             fullWith
-//             readOnly
-//           />
-//           <InputForm
-//             label="Số Order"
-//             register={register}
-//             errors={errors}
-//             id="Order"
-//             validate={{
-//               required: 'vui lòng điền số Order',
-//             }}
-//             placeholder="@oRder"
-//             fullWith
-//           />
-//           <InputForm
-//             label="EQ"
-//             register={register}
-//             errors={errors}
-//             id="eq"
-//             placeholder="@eq"
-//             fullWith
-//             />
-//           {/* <TextAreaForm
-//             label="Thông tin vật tư"
-//              register={register}
-//             errors={errors}
-//             id="SerialNumber"
-//             // validate={{
-//             //   required: 'Vui lòng điền SerialNumber!',
-//             // }}
-//             placeholder="@SerialNumber"
-//             fullWith
-//             rows={4} // 👈 số dòng hiển thị (tuỳ chỉnh)
-//           /> */}
-//           <TextAreaForm
-//             label="Tên VT"
-//             register={register}
-//             errors={errors}
-//             id="TenVT"
-//             validate={{
-//               required: 'Vui lòng điền Tên VT!',
-//             }}
-//             placeholder="@TenVT"
-//             fullWith
-//           />
-//           <InputForm
-//             label="Đơn vị "
-//             register={register}
-//             errors={errors}
-//             id="DonVi"
-//             validate={{
-//               required: 'Vui lòng điền Đơn vị',
-//             }}
-//             placeholder="@DonVi"
-//             fullWith
-//           />
-//           {/* <InputForm
-//             label="Số Lượng"
-//             register={register}
-//             errors={errors}
-//             id="SoLuong"
-//             validate={{
-//               required: 'Vui lòng điền Số Lượng',
-//             }}
-//             placeholder="@SoLuong"
-//             fullWith
-//           /> */}
-
-//           <InputForm
-//             label="Ngày Tạo"
-//             id="NgayTao"
-//             type="date"
-//             register={register}
-//             errors={errors}
-//             validate={{
-//               required: 'Vui lòng chọn ngày!',
-//             }}
-//           />
-//           <InputForm
-//             label="PR mua"
-//             register={register}
-//             errors={errors}
-//             id="PrMua"
-//             validate={{
-//               // required: 'Vui lòng điền PR',
-//             }}
-//             placeholder="@pRmua"
-//             fullWith
-//           />
-//               <InputForm
-//                label="Ghi Chú (link PDF hoặc trang web)"
-//                 register={register}
-//                 errors={errors}
-//                 id="GhiChu"
-//                 type="url"
-//                  validate={{
-//                  required: 'Vui lòng điền Ghi Chú!',
-//                 pattern: {
-//                  value: /^https?:\/\/.+/,
-//                 message: 'Vui lòng nhập đường dẫn hợp lệ, bắt đầu bằng http hoặc https!',
-//                },
-//               }}
-//                 placeholder="@Nhập link PDF: https://tenmien.com/01066-2025-BBSC.pdf"
-//               fullWith
-//             />
-//           <div className="mt-3">
-//             <Button type="submit">Cập nhật Lệnh Bảo Trì</Button>
-//           </div>
-//         </form>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default memo(ModalEditVT)
 import { memo, useEffect, useState } from 'react'
-import { apiEditVT } from '../../apis'
-import { Button, InputForm, TextAreaForm } from '../'
+import { apiEditVT, phanXuongAPI } from '../../apis'
+import { InputForm, TextAreaForm } from '../'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { useDispatch } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { RxCross2 } from 'react-icons/rx'
 
+const DEFAULT_PHAN_XUONG_LIST = [
+  { PhanXuongId: 1, TenPhanXuong: 'Nhà máy Luyện Gang 1' },
+  { PhanXuongId: 2, TenPhanXuong: 'Nhà máy Luyện Gang 2' },
+  { PhanXuongId: 3, TenPhanXuong: 'Nhà máy Nhiệt điện 1' },
+  { PhanXuongId: 4, TenPhanXuong: 'Nhà máy Nhiệt điện 2' },
+  { PhanXuongId: 5, TenPhanXuong: 'Xử lý nước' },
+]
+const normalizePhanXuongList = (list) => {
+  if (!Array.isArray(list)) return []
+
+  return list
+    .map((item) => ({
+      PhanXuongId: Number(item?.PhanXuongId ?? item?.phanXuongId ?? 0),
+      TenPhanXuong: item?.TenPhanXuong ?? item?.tenPhanXuong ?? '',
+    }))
+    .filter((item) => item.PhanXuongId > 0)
+}
 const ModalEditVT = ({ render, editNhanVien }) => {
   const dispatch = useDispatch()
   const [phanXuongList, setPhanXuongList] = useState([])
@@ -231,27 +35,23 @@ const ModalEditVT = ({ render, editNhanVien }) => {
     formState: { errors },
     reset,
     handleSubmit,
-    watch,
   } = useForm()
 
   // Load danh sách phân xưởng
   useEffect(() => {
     const loadPhanXuong = async () => {
       try {
-        const response = await fetch('http://localhost:5134/api/PhanXuong/getAll')
-        if (response.ok) {
-          const data = await response.json()
-          if (Array.isArray(data)) {
-            setPhanXuongList(data)
-          }
+        const response = await phanXuongAPI.getAll()
+        const rawData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : []
+        const normalizedData = normalizePhanXuongList(rawData)
+        if (normalizedData.length > 0) {
+          setPhanXuongList(normalizedData)
+          return
         }
+        setPhanXuongList(normalizePhanXuongList(DEFAULT_PHAN_XUONG_LIST))
       } catch (error) {
         console.error('Lỗi load phân xưởng:', error)
-        // Fallback data
-        setPhanXuongList([
-          { PhanXuongId: 1, TenPhanXuong: 'Nhà máy Luyện Gang 1' },
-          { PhanXuongId: 2, TenPhanXuong: 'Nhà máy Luyện Gang 2' },
-        ])
+        setPhanXuongList(normalizePhanXuongList(DEFAULT_PHAN_XUONG_LIST))
       }
     }
     
@@ -515,3 +315,6 @@ const ModalEditVT = ({ render, editNhanVien }) => {
 }
 
 export default memo(ModalEditVT)
+
+
+

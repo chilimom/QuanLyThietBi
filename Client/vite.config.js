@@ -5,6 +5,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 8386,
+    proxy: {
+      "/api": {
+        target: "http://localhost:5134",
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: "dist", // Thư mục xuất ra khi build
