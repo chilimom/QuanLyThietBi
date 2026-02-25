@@ -151,7 +151,7 @@ const ModalEditVT = ({ render, editNhanVien }) => {
       </div>
       
       <div className="w-full md:w-2/3 px-2 mx-auto mt-5">
-        <h2 className="text-2xl font-bold text-center mb-6">✏️ Sửa vật tư #{editNhanVien?.id}</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">✏️ Sửa Lệnh Bảo Trì #{editNhanVien?.id}</h2>
         
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(handleEditVatTu)}>
           {/* ID (readonly) */}
