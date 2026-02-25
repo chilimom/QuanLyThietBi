@@ -13,7 +13,8 @@ const DEFAULT_PHAN_XUONG_LIST = [
   { PhanXuongId: 2, TenPhanXuong: 'Nhà máy Luyện Gang 2' },
   { PhanXuongId: 3, TenPhanXuong: 'Nhà máy Nhiệt điện 1' },
   { PhanXuongId: 4, TenPhanXuong: 'Nhà máy Nhiệt điện 2' },
-  { PhanXuongId: 5, TenPhanXuong: 'Xử lý nước' },
+  { PhanXuongId: 5, TenPhanXuong: 'Xử Lý Nước' },
+  { PhanXuongId: 6, TenPhanXuong: 'Xưởng Năng Lượng' },
 ]
 const normalizePhanXuongList = (list) => {
   if (!Array.isArray(list)) return []

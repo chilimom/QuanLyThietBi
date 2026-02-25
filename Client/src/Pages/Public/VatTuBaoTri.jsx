@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ImBin, ImFileExcel } from 'react-icons/im'
 import { FaRegEdit, FaEye, FaSyncAlt } from 'react-icons/fa'
 import { Table, Tooltip, Space, Button as AntdButton, Spin, Alert, Modal } from 'antd'
-import { apiDeleteVT, apiExportExcelvattu, apiGetVT } from '../../apis'
+import { apiDeleteVT, apiExportExcelvattu, apiGetVT, phanXuongAPI } from '../../apis'
 import moment from 'moment'
 import Swal from 'sweetalert2'
 import {
@@ -43,6 +43,8 @@ const VatTuBaoTri = () => {
   const [loading, setLoading] = useState(false)
   const [lastRefresh, setLastRefresh] = useState(null)
   const [exportLoading, setExportLoading] = useState(false)
+  const [phanXuongList, setPhanXuongList] = useState([])
+  const [selectedPhanXuongId, setSelectedPhanXuongId] = useState('')
 
   const [selectedVT, setSelectedVT] = useState(null)
   const [apiError, setApiError] = useState('')
@@ -50,6 +52,16 @@ const VatTuBaoTri = () => {
   const queriesDebounce = UseDebouce(watch('q'), 800)
   const page = +params.get('page') || 1
   const limit = +import.meta.env.VITE_LIMIT || 20
+
+  const normalizePhanXuongList = (list) => {
+    if (!Array.isArray(list)) return []
+    return list
+      .map((item) => ({
+        phanXuongId: Number(item?.phanXuongId ?? item?.PhanXuongId ?? 0),
+        tenPhanXuong: item?.tenPhanXuong ?? item?.TenPhanXuong ?? '',
+      }))
+      .filter((item) => item.phanXuongId > 0)
+  }
 
   // ================= REFRESH LISTENER =================
   useEffect(() => {
@@ -66,6 +78,20 @@ const VatTuBaoTri = () => {
     }
   }, [])
 
+  useEffect(() => {
+    const loadPhanXuong = async () => {
+      try {
+        const response = await phanXuongAPI.getAll()
+        const rawData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : []
+        setPhanXuongList(normalizePhanXuongList(rawData))
+      } catch (error) {
+        console.error('❌ Lỗi load phân xưởng:', error)
+        setPhanXuongList([])
+      }
+    }
+    loadPhanXuong()
+  }, [])
+
   // ================= LOAD VẬT TƯ =================
   const fetchVatTu = useCallback(async () => {
     console.log('=== 🚀 BẮT ĐẦU fetchVatTu ===')
@@ -80,6 +106,9 @@ const VatTuBaoTri = () => {
       
       if (queriesDebounce) {
         paramsObj.keyword = queriesDebounce
+      }
+      if (selectedPhanXuongId) {
+        paramsObj.PhanXuongId = Number(selectedPhanXuongId)
       }
       
       if (begind) {
@@ -174,7 +203,7 @@ const VatTuBaoTri = () => {
     } finally {
       setLoading(false)
     }
-  }, [queriesDebounce, page, limit, begind, endd, update])
+  }, [queriesDebounce, page, limit, begind, endd, update, selectedPhanXuongId])
 
   // Gọi API khi có thay đổi
   useEffect(() => {
@@ -232,7 +261,7 @@ const VatTuBaoTri = () => {
           } else {
             toast.error(responseDelete?.message || 'Xóa thất bại')
           }
-        } catch (error) {
+        } catch {
           toast.error('Lỗi khi xóa vật tư')
         }
       }
@@ -259,6 +288,10 @@ const VatTuBaoTri = () => {
       if (queriesDebounce) {
         exportParams.keyword = queriesDebounce
         console.log('🔍 Keyword:', exportParams.keyword)
+      }
+      if (selectedPhanXuongId) {
+        exportParams.PhanXuongId = Number(selectedPhanXuongId)
+        console.log('🏭 PhanXuongId:', exportParams.PhanXuongId)
       }
       
       console.log('📤 Gọi apiExportExcelvattu với params:', exportParams)
@@ -379,44 +412,7 @@ const VatTuBaoTri = () => {
     }
   }
 
-  // ================= ALTERNATIVE: XUẤT EXCEL TRỰC TIẾP =================
-  const handleExportExcelDirect = () => {
-    console.log('🟢 Xuất Excel trực tiếp')
-    
-    try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-      const token = localStorage.getItem('token') || ''
-      
-      let queryString = ''
-      const params = []
-      
-      if (begind) params.push(`begind=${moment(begind).format('YYYY-MM-DD')}`)
-      if (endd) params.push(`endd=${moment(endd).format('YYYY-MM-DD')}`)
-      if (queriesDebounce) params.push(`keyword=${encodeURIComponent(queriesDebounce)}`)
-      
-      if (params.length > 0) {
-        queryString = `?${params.join('&')}`
-      }
-      
-      const exportUrl = `${baseUrl}/api/vattus/export-excel${queryString}`
-      console.log('📤 Export URL:', exportUrl)
-      
-      // Mở URL trong tab mới
-      const newWindow = window.open(exportUrl, '_blank')
-      
-      if (!newWindow) {
-        toast.warning('Vui lòng cho phép popup để tải file')
-      } else {
-        toast.info('Đang tải file Excel...')
-      }
-      
-    } catch (error) {
-      console.error('❌ Lỗi xuất Excel trực tiếp:', error)
-      toast.error('Lỗi khi mở file Excel')
-    }
-  }
-
-  const handleTG = (b, e) => {
+    const handleTG = (b, e) => {
     setBegind(b)
     setEndd(e)
     navigate({
@@ -435,6 +431,7 @@ const VatTuBaoTri = () => {
   const handleClearFilters = () => {
     setBegind(null)
     setEndd(null)
+    setSelectedPhanXuongId('')
     reset({ q: '' })
     navigate({
       pathname: location.pathname,
@@ -642,8 +639,29 @@ const VatTuBaoTri = () => {
             className="shadow-sm"
           />
         </div>
+
+        <div className="w-full md:w-[260px]">
+          <select
+            value={selectedPhanXuongId}
+            onChange={(e) => {
+              setSelectedPhanXuongId(e.target.value)
+              navigate({
+                pathname: location.pathname,
+                search: createSearchParams({ page: '1' }).toString(),
+              })
+            }}
+            className="w-full h-[42px] px-3 rounded-lg border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="">🏭 Tất cả phân xưởng</option>
+            {phanXuongList.map((px) => (
+              <option key={px.phanXuongId} value={px.phanXuongId}>
+                {px.phanXuongId}. {px.tenPhanXuong || `Phân xưởng ${px.phanXuongId}`}
+              </option>
+            ))}
+          </select>
+        </div>
         
-        {(begind || endd || queriesDebounce) && (
+        {(begind || endd || queriesDebounce || selectedPhanXuongId) && (
           <button
             onClick={handleClearFilters}
             className="px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -800,3 +818,4 @@ const VatTuBaoTri = () => {
 }
 
 export default VatTuBaoTri
+
