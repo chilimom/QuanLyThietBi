@@ -21,7 +21,19 @@ public partial class NhanVien
 
     public int? IdtinhTrangLv { get; set; }
 
+    public int? IdChucVu { get; set; }
+
+    public int? IdKipLamViec { get; set; }
+
+    public int? IdToLamViec { get; set; }
+
     public virtual PhongBan? IdphongBanNavigation { get; set; }
+
+    public virtual ChucVu? IdChucVuNavigation { get; set; }
+
+    public virtual KipLamViec? IdKipLamViecNavigation { get; set; }
+
+    public virtual ToLamViec? IdToLamViecNavigation { get; set; }
 
     public virtual ICollection<NguoiDung> NguoiDungs { get; set; } = new List<NguoiDung>();
 }

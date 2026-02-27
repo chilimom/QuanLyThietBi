@@ -11,6 +11,7 @@ import logo from '../../assets/image/Logo.png'
 import { useDispatch } from 'react-redux'
 import { login } from '../../store/user/userSlice'
 import { showModal } from '../../store/loading/loadingSlice'
+import { getCurent } from '../../store/user/asyncActions'
 
 const Login = () => {
   const dispatch = useDispatch()
@@ -39,7 +40,10 @@ const Login = () => {
       const rs = await apiLogin(data)
 
       if (rs.status) {
-        const { token, manv, hoten } = rs
+        const token = rs?.data?.accessToken
+        const manv = rs?.data?.maNv
+        const hoten = rs?.data?.hoTen
+        const role = rs?.data?.role
 
         // Nhớ mật khẩu
         if (remember) {
@@ -52,9 +56,11 @@ const Login = () => {
           login({
             isLoggedIn: true,
             token,
-            userData: { manv, hoten },
+            userData: { maNv: manv, hoTen: hoten, idQuyen: role },
           })
         )
+        localStorage.setItem('token', token || '')
+        dispatch(getCurent())
 
         toast.success(rs.message)
         navigate(`/${path.LAYOUT}/${path.MANAGE_TB}`)

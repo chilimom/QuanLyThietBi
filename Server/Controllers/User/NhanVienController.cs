@@ -63,6 +63,9 @@ namespace Server.Controllers
                 DiaChi = request.DiaChi,
                 NgayVaoLam = request.NgayVaoLam,
                 IdphongBan = request.IdPhongBan,
+                IdChucVu = request.IdChucVu,
+                IdKipLamViec = request.IdKipLamViec,
+                IdToLamViec = request.IdToLamViec,
                 IdtinhTrangLv = 0
             };
 
@@ -87,7 +90,10 @@ namespace Server.Controllers
         {
             var query = _context.NhanViens
                 .AsNoTracking()
-                // .Include(nv => nv.IdphongBanNavigation) // 
+                .Include(nv => nv.IdphongBanNavigation)
+                .Include(nv => nv.IdChucVuNavigation)
+                .Include(nv => nv.IdKipLamViecNavigation)
+                .Include(nv => nv.IdToLamViecNavigation)
                 .Select(nv => new NhanVienDto
                 {
                     Id = nv.Id,
@@ -95,8 +101,14 @@ namespace Server.Controllers
                     HoTen = nv.HoTen,
                     DiaChi = nv.DiaChi,
                     NgayVaoLam = nv.NgayVaoLam,
-                    // TenPhongBan = nv.IdphongBanNavigation.TenPhongBan,
+                    TenPhongBan = nv.IdphongBanNavigation != null ? nv.IdphongBanNavigation.TenPhongBan : null,
                     IdPhongBan = nv.IdphongBan,
+                    IdChucVu = nv.IdChucVu,
+                    TenChucVu = nv.IdChucVuNavigation != null ? nv.IdChucVuNavigation.TenChucVu : null,
+                    IdKipLamViec = nv.IdKipLamViec,
+                    TenKipLamViec = nv.IdKipLamViecNavigation != null ? nv.IdKipLamViecNavigation.TenKipLamViec : null,
+                    IdToLamViec = nv.IdToLamViec,
+                    TenToLamViec = nv.IdToLamViecNavigation != null ? nv.IdToLamViecNavigation.TenToLamViec : null,
                     HoTenKhongDau = nv.HoTenKhongDau,
                 });
 
@@ -229,6 +241,9 @@ namespace Server.Controllers
             nhanVien.DiaChi = request.DiaChi;
             nhanVien.NgayVaoLam = request.NgayVaoLam;
             nhanVien.IdphongBan = request.IdPhongBan;
+            nhanVien.IdChucVu = request.IdChucVu;
+            nhanVien.IdKipLamViec = request.IdKipLamViec;
+            nhanVien.IdToLamViec = request.IdToLamViec;
 
             _context.NhanViens.Update(nhanVien);
             await _context.SaveChangesAsync();

@@ -14,6 +14,9 @@ namespace Server.Models
         public string? MaNV { get; set; }
         public string? HoTen { get; set; }
         public string? TenPB { get; set; }
+        public string? TenChucVu { get; set; }
+        public string? TenKipLamViec { get; set; }
+        public string? TenToLamViec { get; set; }
         public int IDQuyen { get; set; }
         public string? TenQuyen { get; set; }
         public int IsLock { get; set; }

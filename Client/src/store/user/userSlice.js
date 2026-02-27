@@ -14,7 +14,7 @@ export const userSlice = createSlice({
     login: (state, action) => {
       // console.log(action);
       ;((state.isLoggedIn = action.payload.isLoggedIn),
-        // (state.current = action.payload.userData));
+        (state.current = action.payload.userData || null),
         (state.token = action.payload.token))
       // state.refreshtoken = action.payload.refreshtoken;
     },
@@ -26,6 +26,7 @@ export const userSlice = createSlice({
       state.isLoading = false
       state.mess = ''
       state.token = null
+      localStorage.removeItem('token')
       // state.refreshtoken = null;
     },
     clearMessage: (state) => {

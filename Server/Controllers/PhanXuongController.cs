@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Server.Models;
 // using ClosedXML.Excel;
 
@@ -52,6 +53,7 @@ namespace Server.Controllers
         // 3) CREATE
         // ==========================
         [HttpPost("create")]
+        [Authorize(Roles = "4")]
         public async Task<IActionResult> Create([FromBody] PhanXuong model)
         {
             if (!ModelState.IsValid)
@@ -76,6 +78,7 @@ namespace Server.Controllers
         // 4) UPDATE
         // ==========================
         [HttpPut("update/{id}")]
+        [Authorize(Roles = "4")]
         public async Task<IActionResult> Update(int id, [FromBody] PhanXuong model)
         {
             var px = await _context.PhanXuongs.FindAsync(id);
@@ -98,6 +101,7 @@ namespace Server.Controllers
         // 5) DELETE
         // ==========================
         [HttpDelete("delete/{id}")]
+        [Authorize(Roles = "4")]
         public async Task<IActionResult> Delete(int id)
         {
             var px = await _context.PhanXuongs.FindAsync(id);

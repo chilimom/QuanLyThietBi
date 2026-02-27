@@ -10,5 +10,11 @@ namespace Server.Models
         public string? TenPhongBan { get; set;}
         public DateOnly? NgayVaoLam { get; set; }
         public int? IdPhongBan { get; set; }
+        public int? IdChucVu { get; set; }
+        public string? TenChucVu { get; set; }
+        public int? IdKipLamViec { get; set; }
+        public string? TenKipLamViec { get; set; }
+        public int? IdToLamViec { get; set; }
+        public string? TenToLamViec { get; set; }
     }
 }

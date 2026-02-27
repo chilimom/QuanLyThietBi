@@ -22,6 +22,9 @@ namespace Server.Models
         public virtual DbSet<PhongBan> PhongBans { get; set; }
         public virtual DbSet<Quyen> Quyens { get; set; }
         public virtual DbSet<PhanXuong> PhanXuongs { get; set; }
+        public virtual DbSet<ChucVu> ChucVus { get; set; }
+        public virtual DbSet<KipLamViec> KipLamViecs { get; set; }
+        public virtual DbSet<ToLamViec> ToLamViecs { get; set; }
         public DbSet<XuatVatTu> XuatVatTus { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -106,7 +109,10 @@ namespace Server.Models
                 entity.Property(e => e.DiaChi).HasMaxLength(150);
                 entity.Property(e => e.HoTen).HasMaxLength(50);
                 entity.Property(e => e.HoTenKhongDau).HasMaxLength(50);
+                entity.Property(e => e.IdChucVu).HasColumnName("IDChucVu");
+                entity.Property(e => e.IdKipLamViec).HasColumnName("IDKipLamViec");
                 entity.Property(e => e.IdphongBan).HasColumnName("IDPhongBan");
+                entity.Property(e => e.IdToLamViec).HasColumnName("IDToLamViec");
                 entity.Property(e => e.IdtinhTrangLv).HasColumnName("IDTinhTrangLV");
 
                 entity.Property(e => e.MaNv)
@@ -118,6 +124,21 @@ namespace Server.Models
                       .WithMany(p => p.NhanViens)
                       .HasForeignKey(d => d.IdphongBan)
                       .HasConstraintName("FK_NhanVien_PhongBan");
+
+                entity.HasOne(d => d.IdChucVuNavigation)
+                      .WithMany(p => p.NhanViens)
+                      .HasForeignKey(d => d.IdChucVu)
+                      .HasConstraintName("FK_NhanVien_ChucVu");
+
+                entity.HasOne(d => d.IdKipLamViecNavigation)
+                      .WithMany(p => p.NhanViens)
+                      .HasForeignKey(d => d.IdKipLamViec)
+                      .HasConstraintName("FK_NhanVien_KipLamViec");
+
+                entity.HasOne(d => d.IdToLamViecNavigation)
+                      .WithMany(p => p.NhanViens)
+                      .HasForeignKey(d => d.IdToLamViec)
+                      .HasConstraintName("FK_NhanVien_ToLamViec");
             });
 
             // =======================
@@ -158,6 +179,36 @@ namespace Server.Models
                 entity.ToTable("PhanXuong");
                 entity.Property(e => e.PhanXuongId).ValueGeneratedOnAdd();
                 entity.Property(e => e.TenPhanXuong).HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<ChucVu>(entity =>
+            {
+                entity.HasKey(e => e.IdChucVu);
+                entity.ToTable("ChucVu");
+                entity.Property(e => e.IdChucVu)
+                      .ValueGeneratedOnAdd()
+                      .HasColumnName("IDChucVu");
+                entity.Property(e => e.TenChucVu).HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<KipLamViec>(entity =>
+            {
+                entity.HasKey(e => e.IdKipLamViec);
+                entity.ToTable("KipLamViec");
+                entity.Property(e => e.IdKipLamViec)
+                      .ValueGeneratedOnAdd()
+                      .HasColumnName("IDKipLamViec");
+                entity.Property(e => e.TenKipLamViec).HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<ToLamViec>(entity =>
+            {
+                entity.HasKey(e => e.IdToLamViec);
+                entity.ToTable("ToLamViec");
+                entity.Property(e => e.IdToLamViec)
+                      .ValueGeneratedOnAdd()
+                      .HasColumnName("IDToLamViec");
+                entity.Property(e => e.TenToLamViec).HasMaxLength(100);
             });
 
             OnModelCreatingPartial(modelBuilder);

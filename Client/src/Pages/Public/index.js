@@ -1,4 +1,9 @@
 export { default as ManageThietBi } from './ManageThietBi'
 export { default as VatTuBaoTri } from './VatTuBaoTri'
 export { default as Login } from './Login'
-
+export { default as ManageUser } from './ManageUser'
+export { default as AdminLoginRole } from './AdminLoginRole'
+export { default as AdminPosition } from './AdminPosition'
+export { default as AdminWorkshop } from './AdminWorkshop'
+export { default as AdminShift } from './AdminShift'
+export { default as AdminTeam } from './AdminTeam'

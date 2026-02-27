@@ -8,7 +8,6 @@ using Server.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
@@ -22,7 +21,6 @@ public class AuthController : ControllerBase
         _context = context;
         _config = config;
     }
-
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -38,7 +36,7 @@ public class AuthController : ControllerBase
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Tài khoản hoặc mật khẩu không đúng!",
+                Message = "Tai khoan hoac mat khau khong dung!",
                 Data = null
             });
         }
@@ -48,7 +46,7 @@ public class AuthController : ControllerBase
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Tài khoản đã bị khóa!",
+                Message = "Tai khoan da bi khoa!",
                 Data = null
             });
         }
@@ -61,19 +59,15 @@ public class AuthController : ControllerBase
             _config["Jwt:Issuer"]!
         );
 
-        // var refreshToken = JwtHelper.GenerateRefreshToken();
-        // account.RefreshToken = refreshToken;
-        // account.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         await _context.SaveChangesAsync();
 
         var response = new ApiResponse<LoginReponse>
         {
             Status = true,
-            Message = "Đăng nhập thành công!",
+            Message = "Dang nhap thanh cong!",
             Data = new LoginReponse
             {
                 AccessToken = accessToken,
-                // RefreshToken = refreshToken,
                 MaNv = account?.TenDangNhap,
                 Role = role,
                 HoTen = account?.NhanVien?.HoTen
@@ -82,23 +76,6 @@ public class AuthController : ControllerBase
 
         return Ok(response);
     }
-    // [HttpPost("logout")]
-    // public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
-    // {
-    //     var user = await _context.NguoiDungs.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
-    //     if (user == null)
-    //         return NotFound(new { message = "Không tìm thấy người dùng." });
-
-    //     user.RefreshToken = null;
-    //     await _context.SaveChangesAsync();
-
-    //     return Ok(new ApiResponse<string>
-    //     {
-    //         Status = true,
-    //         Message = "Đăng xuất thành công!",
-    //         Data = null,
-    //     });
-    // }
 
     [Authorize]
     [HttpGet("detail")]
@@ -106,40 +83,75 @@ public class AuthController : ControllerBase
     {
         var username = User.FindFirst(ClaimTypes.Name)?.Value;
 
-        var user = await (
-            from a in _context.NguoiDungs
-            join nv in _context.NhanViens on a.NhanVienId equals nv.Id
-            join q in _context.Quyens on a.Idquyen equals q.Idquyen
-            join pb in _context.PhongBans on nv.IdphongBan equals pb.IdphongBan
-            where a.TenDangNhap == username
-            select new NguoiDungValidation
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return Unauthorized(new ApiResponse<string>
             {
-                IDNguoiDung = a.IdnguoiDung,
-                TenDangNhap = a.TenDangNhap!,
-                MatKhau = a.MatKhau!,
-                NhanVienID = a.NhanVienId ?? 0,
-                MaNV = nv.MaNv!,
-                HoTen = nv.HoTen!,
-                TenPB = pb.TenPhongBan!,
-                IDQuyen = a.Idquyen ?? 0,
-                TenQuyen = q.TenQuyen!,
-                IsLock = a.IsLock ?? 0
-            }
-        ).FirstOrDefaultAsync();
+                Status = false,
+                Message = "Token khong hop le!"
+            });
+        }
 
-        if (user == null)
-            return NotFound(new ApiResponse<string> { Status = false, Message = "Không tìm thấy người dùng!" });
+        var account = await _context.NguoiDungs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.TenDangNhap == username);
+
+        if (account == null)
+        {
+            return NotFound(new ApiResponse<string>
+            {
+                Status = false,
+                Message = "Khong tim thay nguoi dung!"
+            });
+        }
+
+        var nhanVien = account.NhanVienId.HasValue
+            ? await _context.NhanViens.AsNoTracking().FirstOrDefaultAsync(x => x.Id == account.NhanVienId.Value)
+            : null;
+
+        var quyen = account.Idquyen.HasValue
+            ? await _context.Quyens.AsNoTracking().FirstOrDefaultAsync(x => x.Idquyen == account.Idquyen.Value)
+            : null;
+
+        var phongBan = nhanVien?.IdphongBan.HasValue == true
+            ? await _context.PhongBans.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.IdphongBan == nhanVien.IdphongBan!.Value)
+            : null;
+        var chucVu = nhanVien?.IdChucVu.HasValue == true
+            ? await _context.ChucVus.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.IdChucVu == nhanVien.IdChucVu!.Value)
+            : null;
+        var kipLamViec = nhanVien?.IdKipLamViec.HasValue == true
+            ? await _context.KipLamViecs.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.IdKipLamViec == nhanVien.IdKipLamViec!.Value)
+            : null;
+        var toLamViec = nhanVien?.IdToLamViec.HasValue == true
+            ? await _context.ToLamViecs.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.IdToLamViec == nhanVien.IdToLamViec!.Value)
+            : null;
+
+        var user = new NguoiDungValidation
+        {
+            IDNguoiDung = account.IdnguoiDung,
+            TenDangNhap = account.TenDangNhap ?? string.Empty,
+            MatKhau = account.MatKhau ?? string.Empty,
+            NhanVienID = account.NhanVienId ?? 0,
+            MaNV = nhanVien?.MaNv ?? string.Empty,
+            HoTen = nhanVien?.HoTen ?? string.Empty,
+            TenPB = phongBan?.TenPhongBan ?? string.Empty,
+            TenChucVu = chucVu?.TenChucVu ?? string.Empty,
+            TenKipLamViec = kipLamViec?.TenKipLamViec ?? string.Empty,
+            TenToLamViec = toLamViec?.TenToLamViec ?? string.Empty,
+            IDQuyen = account.Idquyen ?? 0,
+            TenQuyen = quyen?.TenQuyen ?? string.Empty,
+            IsLock = account.IsLock ?? 0
+        };
 
         return Ok(new ApiResponse<NguoiDungValidation>
         {
             Status = true,
-            Message = "Lấy thông tin người dùng thành công",
+            Message = "Lay thong tin nguoi dung thanh cong",
             Data = user
         });
     }
-
-    
-    
-
-
 }

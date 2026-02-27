@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
@@ -29,12 +29,12 @@ public class NguoiDungController : ControllerBase
             return BadRequest(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Dữ liệu không hợp lệ",
+                Message = "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡",
                 Data = null
             });
         }
 
-        // Kiểm tra trùng tên đăng nhập
+        // Kiá»ƒm tra trÃ¹ng tÃªn Ä‘Äƒng nháº­p
         var existingUser = await _context.NguoiDungs
             .FirstOrDefaultAsync(u => u.TenDangNhap == request.TenDangNhap);
 
@@ -43,28 +43,28 @@ public class NguoiDungController : ControllerBase
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = $"Tên đăng nhập '{request.TenDangNhap}' đã tồn tại!",
+                Message = $"TÃªn Ä‘Äƒng nháº­p '{request.TenDangNhap}' Ä‘Ã£ tá»“n táº¡i!",
                 Data = null
             });
         }
 
-        // Kiểm tra nhân viên có tồn tại không (nếu cần)
+        // Kiá»ƒm tra nhÃ¢n viÃªn cÃ³ tá»“n táº¡i khÃ´ng (náº¿u cáº§n)
         var nhanVien = await _context.NhanViens.FindAsync(request.NhanVienId);
         if (nhanVien == null)
         {
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Không tìm thấy nhân viên tương ứng!",
+                Message = "KhÃ´ng tÃ¬m tháº¥y nhÃ¢n viÃªn tÆ°Æ¡ng á»©ng!",
                 Data = null
             });
         }
 
-        //  Tạo tài khoản người dùng
+        //  Táº¡o tÃ i khoáº£n ngÆ°á»i dÃ¹ng
         var user = new NguoiDung
         {
             TenDangNhap = request.TenDangNhap,
-            MatKhau = Encryptor.MD5Hash(request.MatKhau!), // Hash mật khẩu trước khi lưu
+            MatKhau = Encryptor.MD5Hash(request.MatKhau!), // Hash máº­t kháº©u trÆ°á»›c khi lÆ°u
             NhanVienId = request.NhanVienId,
             Idquyen = request.Idquyen,
             IsLock = 0
@@ -76,7 +76,7 @@ public class NguoiDungController : ControllerBase
         return Ok(new ApiResponse<NguoiDung>
         {
             Status = true,
-            Message = "Tạo tài khoản người dùng thành công!",
+            Message = "Táº¡o tÃ i khoáº£n ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng!",
             Data = null
         });
     }
@@ -92,28 +92,40 @@ public class NguoiDungController : ControllerBase
     {
         var username = User.Identity?.Name;
 
-        // Base query (JOIN + select)
+        // Base query (LEFT JOIN + select) to keep users even when linked data is missing
         var query =
             from a in _context.NguoiDungs.AsNoTracking()
-            join nv in _context.NhanViens.AsNoTracking() on a.NhanVienId equals nv.Id
-            join q in _context.Quyens.AsNoTracking() on a.Idquyen equals q.Idquyen
-            join pb in _context.PhongBans.AsNoTracking() on nv.IdphongBan equals pb.IdphongBan
+            join nv0 in _context.NhanViens.AsNoTracking() on a.NhanVienId equals nv0.Id into nvJoin
+            from nv in nvJoin.DefaultIfEmpty()
+            join q0 in _context.Quyens.AsNoTracking() on a.Idquyen equals q0.Idquyen into qJoin
+            from q in qJoin.DefaultIfEmpty()
+            join pb0 in _context.PhongBans.AsNoTracking() on nv.IdphongBan equals pb0.IdphongBan into pbJoin
+            from pb in pbJoin.DefaultIfEmpty()
+            join cv0 in _context.ChucVus.AsNoTracking() on nv.IdChucVu equals cv0.IdChucVu into cvJoin
+            from cv in cvJoin.DefaultIfEmpty()
+            join kip0 in _context.KipLamViecs.AsNoTracking() on nv.IdKipLamViec equals kip0.IdKipLamViec into kipJoin
+            from kip in kipJoin.DefaultIfEmpty()
+            join to0 in _context.ToLamViecs.AsNoTracking() on nv.IdToLamViec equals to0.IdToLamViec into toJoin
+            from to in toJoin.DefaultIfEmpty()
             where a.TenDangNhap != username
             select new NguoiDungValidation
             {
                 IDNguoiDung = a.IdnguoiDung,
-                TenDangNhap = a.TenDangNhap!,
-                MatKhau = a.MatKhau!,           // cân nhắc bỏ trường này khi trả danh sách
+                TenDangNhap = a.TenDangNhap ?? "",
+                MatKhau = a.MatKhau ?? "",
                 NhanVienID = a.NhanVienId ?? 0,
-                MaNV = nv.MaNv!,
-                HoTen = nv.HoTen!,
-                TenPB = pb.TenPhongBan!,
+                MaNV = nv != null ? (nv.MaNv ?? "") : "",
+                HoTen = nv != null ? (nv.HoTen ?? "") : "",
+                TenPB = pb != null ? (pb.TenPhongBan ?? "") : "",
+                TenChucVu = cv != null ? (cv.TenChucVu ?? "") : "",
+                TenKipLamViec = kip != null ? (kip.TenKipLamViec ?? "") : "",
+                TenToLamViec = to != null ? (to.TenToLamViec ?? "") : "",
                 IDQuyen = a.Idquyen ?? 0,
-                TenQuyen = q.TenQuyen!,
+                TenQuyen = q != null ? (q.TenQuyen ?? "") : "",
                 IsLock = a.IsLock ?? 0
             };
 
-        // Tìm kiếm đơn giản
+        // TÃ¬m kiáº¿m Ä‘Æ¡n giáº£n
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             var pat = $"%{keyword.Trim()}%";
@@ -122,19 +134,22 @@ public class NguoiDungController : ControllerBase
                 EF.Functions.Like(x.TenDangNhap, pat) ||
                 EF.Functions.Like(x.MaNV, pat) ||
                 EF.Functions.Like(x.TenPB, pat) ||
+                EF.Functions.Like(x.TenChucVu, pat) ||
+                EF.Functions.Like(x.TenKipLamViec, pat) ||
+                EF.Functions.Like(x.TenToLamViec, pat) ||
                 EF.Functions.Like(x.TenQuyen, pat)
             );
         }
 
-        // Tổng số dòng sau khi lọc
+        // Tá»•ng sá»‘ dÃ²ng sau khi lá»c
         var total = await query.CountAsync();
 
-        // Sắp xếp đơn giản theo HoTen
+        // Sáº¯p xáº¿p Ä‘Æ¡n giáº£n theo HoTen
         query = sortOrder.Equals("asc", StringComparison.OrdinalIgnoreCase)
             ? query.OrderBy(x => x.HoTen)
             : query.OrderByDescending(x => x.HoTen);
 
-        // Phân trang
+        // PhÃ¢n trang
         var data = await query
             .Skip((page - 1) * limit)
             .Take(limit)
@@ -143,7 +158,7 @@ public class NguoiDungController : ControllerBase
         return Ok(new ApiResponsePagination<List<NguoiDungValidation>>
         {
             Status = true,
-            Message = "Lấy danh sách người dùng thành công!",
+            Message = "Láº¥y danh sÃ¡ch ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng!",
             Data = data,
             TotalItems = total,
             Page = page,
@@ -161,7 +176,7 @@ public class NguoiDungController : ControllerBase
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Không tìm thấy người dùng cần xóa.",
+                Message = "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng cáº§n xÃ³a.",
                 Data = null
             });
         }
@@ -172,7 +187,7 @@ public class NguoiDungController : ControllerBase
         return Ok(new ApiResponse<object>
         {
             Status = true,
-            Message = "Xóa người dùng thành công!",
+            Message = "XÃ³a ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng!",
             Data = null
         });
     }
@@ -185,7 +200,7 @@ public class NguoiDungController : ControllerBase
             return BadRequest(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Dữ liệu không hợp lệ",
+                Message = "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡",
                 Data = null
             });
         }
@@ -196,12 +211,12 @@ public class NguoiDungController : ControllerBase
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Không tìm thấy người dùng cần cập nhật.",
+                Message = "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng cáº§n cáº­p nháº­t.",
                 Data = null
             });
         }
 
-        // Kiểm tra trùng tên đăng nhập khác ID hiện tại
+        // Kiá»ƒm tra trÃ¹ng tÃªn Ä‘Äƒng nháº­p khÃ¡c ID hiá»‡n táº¡i
         var newUsername = request.TenDangNhap?.Trim();
         if (!string.IsNullOrEmpty(newUsername) &&
             !string.Equals(newUsername, nguoidung.TenDangNhap?.Trim(), StringComparison.OrdinalIgnoreCase))
@@ -213,15 +228,15 @@ public class NguoiDungController : ControllerBase
                 return Ok(new ApiResponse<object>
                 {
                     Status = false,
-                    Message = $"Tên đăng nhập '{newUsername}' đã tồn tại!",
+                    Message = $"TÃªn Ä‘Äƒng nháº­p '{newUsername}' Ä‘Ã£ tá»“n táº¡i!",
                 });
 
             nguoidung.TenDangNhap = newUsername;
         }
 
-        // Cập nhật thông tin
+        // Cáº­p nháº­t thÃ´ng tin
 
-        // Nếu mật khẩu được truyền và khác với mật khẩu cũ, thì hash lại
+        // Náº¿u máº­t kháº©u Ä‘Æ°á»£c truyá»n vÃ  khÃ¡c vá»›i máº­t kháº©u cÅ©, thÃ¬ hash láº¡i
         if (!string.IsNullOrWhiteSpace(request.MatKhau))
         {
             nguoidung.MatKhau = Encryptor.MD5Hash(request.MatKhau);
@@ -237,7 +252,7 @@ public class NguoiDungController : ControllerBase
         return Ok(new ApiResponse<NguoiDung>
         {
             Status = true,
-            Message = "Cập nhật người dùng thành công!",
+            Message = "Cáº­p nháº­t ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng!",
             Data = nguoidung
         });
     }
@@ -250,7 +265,7 @@ public class NguoiDungController : ControllerBase
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Dữ liệu không hợp lệ",
+                Message = "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡",
                 Data = null
             });
         }
@@ -261,12 +276,12 @@ public class NguoiDungController : ControllerBase
             return Ok(new ApiResponse<object>
             {
                 Status = false,
-                Message = "Không tìm thấy người dùng cần cập nhật.",
+                Message = "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng cáº§n cáº­p nháº­t.",
                 Data = null
             });
         }
 
-        // Nếu mật khẩu được truyền và khác với mật khẩu cũ, thì hash lại
+        // Náº¿u máº­t kháº©u Ä‘Æ°á»£c truyá»n vÃ  khÃ¡c vá»›i máº­t kháº©u cÅ©, thÃ¬ hash láº¡i
         if (!string.IsNullOrWhiteSpace(request.Matkhaumoi))
         {
             nguoidung.MatKhau = Encryptor.MD5Hash(request.Matkhaumoi);
@@ -279,7 +294,7 @@ public class NguoiDungController : ControllerBase
         return Ok(new ApiResponse<NguoiDung>
         {
             Status = true,
-            Message = "Cập nhật người dùng thành công!",
+            Message = "Cáº­p nháº­t ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng!",
             Data = nguoidung
         });
     }
@@ -289,6 +304,9 @@ public class NguoiDungController : ControllerBase
     {
         var nhanViens = await _context.NhanViens
             .Include(nv => nv.IdphongBanNavigation)
+            .Include(nv => nv.IdChucVuNavigation)
+            .Include(nv => nv.IdKipLamViecNavigation)
+            .Include(nv => nv.IdToLamViecNavigation)
             .Select(nv => new NhanVienDto
             {
                 Id = nv.Id,
@@ -296,8 +314,14 @@ public class NguoiDungController : ControllerBase
                 HoTen = nv.HoTen,
                 DiaChi = nv.DiaChi,
                 NgayVaoLam = nv.NgayVaoLam,
-                // TenPhongBan = nv.IdphongBanNavigation.TenPhongBan,
+                TenPhongBan = nv.IdphongBanNavigation != null ? nv.IdphongBanNavigation.TenPhongBan : null,
                 IdPhongBan = nv.IdphongBan,
+                IdChucVu = nv.IdChucVu,
+                TenChucVu = nv.IdChucVuNavigation != null ? nv.IdChucVuNavigation.TenChucVu : null,
+                IdKipLamViec = nv.IdKipLamViec,
+                TenKipLamViec = nv.IdKipLamViecNavigation != null ? nv.IdKipLamViecNavigation.TenKipLamViec : null,
+                IdToLamViec = nv.IdToLamViec,
+                TenToLamViec = nv.IdToLamViecNavigation != null ? nv.IdToLamViecNavigation.TenToLamViec : null,
                 HoTenKhongDau = nv.HoTenKhongDau,
             })
             .ToListAsync();
@@ -305,7 +329,7 @@ public class NguoiDungController : ControllerBase
         return Ok(new ApiResponse<List<NhanVienDto>>
         {
             Status = true,
-            Message = "Lấy danh sách nhân viên thành công!",
+            Message = "Láº¥y danh sÃ¡ch nhÃ¢n viÃªn thÃ nh cÃ´ng!",
             Data = nhanViens
         });
     }

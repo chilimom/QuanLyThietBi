@@ -4,21 +4,21 @@ import { HomeSidebar } from '../../ultils/contain'
 import clsx from 'clsx'
 import icons from '../../ultils/icons'
 import logo from '../../assets/image/Logo.png'
-// import { useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 const { FaSortDown, FaCaretRight } = icons
 
 const Sidebar = ({ isMini, onExpand }) => {
   const navigate = useNavigate()
-  //   const { current } = useSelector((state) => state.user);
+  const { current } = useSelector((state) => state.user)
   //   const { currentNav } = useSelector((state) => state.nav)
   const sidebarItems = useMemo(() => {
     // if (currentNav === 'Xưởng nồi hơi lọc bụi') return NHLBSidebar();
     // if (currentNav === 'Xưởng Tuabin,máy phát') return TBMPSidebar();
     // if (currentNav === 'Home') return HomeSidebar()
 
-    return HomeSidebar()
-  }, [])
+    return HomeSidebar(current)
+  }, [current])
 
   const [isFirstRender, setIsFirstRender] = useState(true)
   const [actived, setActived] = useState([]) // level 1

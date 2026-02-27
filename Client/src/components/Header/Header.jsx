@@ -17,7 +17,6 @@ const Header = ({ onToggleSidebar }) => {
   const dispatch = useDispatch()
   const [isShowOption, setIsShowOption] = useState(false)
   const { current, isLoggedIn } = useSelector((state) => state.user)
-  console.log('daaa', current)
 
   const handleLogout = async () => {
     dispatch(logout())
@@ -66,7 +65,7 @@ const Header = ({ onToggleSidebar }) => {
               className="w-[30px] h-[30px] rounded-full object-cover"
             />
 
-            <span className="hidden text-[14px] sm:block">Tạ Công Vương</span>
+            <span className="hidden text-[14px] sm:block">{current?.hoTen || current?.tenDangNhap || 'User'}</span>
             <div className="pb-2">
               <FaSortDown />
             </div>
