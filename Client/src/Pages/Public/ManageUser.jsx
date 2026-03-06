@@ -1,20 +1,8 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import {
-  apiCreateNV,
-  apiDeleteND,
-  apiEditNV,
-  apiEditND,
-  apiGetAllNguoiDung,
-  apiGetChucVu,
-  apiGetKipLamViec,
-  apiGetMaNV,
-  apiGetQuyen,
-  apiGetToLamViec,
-  apiRegister,
-} from '../../apis'
+import { apiDeleteND, apiEditND, apiGetAllNguoiDung, apiGetQuyen, apiRegister } from '../../apis'
 
 const pageSize = +import.meta.env.VITE_LIMIT || 20
 
@@ -23,11 +11,6 @@ const ManageUser = () => {
 
   const [users, setUsers] = useState([])
   const [roles, setRoles] = useState([])
-  const [chucVus, setChucVus] = useState([])
-  const [kipLamViecs, setKipLamViecs] = useState([])
-  const [toLamViecs, setToLamViecs] = useState([])
-  const [nhanViens, setNhanViens] = useState([])
-
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -35,7 +18,6 @@ const ManageUser = () => {
   const [openCreate, setOpenCreate] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [employeeMode, setEmployeeMode] = useState('existing')
 
   const [formCreate] = Form.useForm()
   const [formEdit] = Form.useForm()
@@ -60,97 +42,31 @@ const ManageUser = () => {
     }
   }, [keyword, page])
 
-  const loadResources = useCallback(async () => {
+  const loadRoles = useCallback(async () => {
     try {
-      const [rsRole, rsChucVu, rsKip, rsTo, rsMaNv] = await Promise.all([
-        apiGetQuyen(),
-        apiGetChucVu(),
-        apiGetKipLamViec(),
-        apiGetToLamViec(),
-        apiGetMaNV(),
-      ])
+      const rsRole = await apiGetQuyen()
       setRoles(rsRole?.data || [])
-      setChucVus(rsChucVu?.data || [])
-      setKipLamViecs(rsKip?.data || [])
-      setToLamViecs(rsTo?.data || [])
-      setNhanViens(rsMaNv?.data || [])
     } catch {
-      toast.error('Không tải được danh mục quản trị')
+      toast.error('Không tải được danh sách quyền')
     }
   }, [])
 
   useEffect(() => {
-    loadResources()
-  }, [loadResources])
+    loadRoles()
+  }, [loadRoles])
 
   useEffect(() => {
     loadUsers()
   }, [loadUsers])
-
-  const updateNhanVienMeta = async (nhanVienId, values) => {
-    const nv = nhanViens.find((item) => item.id === nhanVienId)
-    if (!nv) return
-
-    await apiEditNV(nhanVienId, {
-      id: nv.id,
-      maNv: nv.maNv,
-      hoTen: nv.hoTen,
-      hoTenKhongDau: nv.hoTenKhongDau,
-      diaChi: nv.diaChi,
-      ngayVaoLam: nv.ngayVaoLam,
-      idPhongBan: nv.idPhongBan,
-      idChucVu: values.idChucVu ?? nv.idChucVu ?? null,
-      idKipLamViec: values.idKipLamViec ?? nv.idKipLamViec ?? null,
-      idToLamViec: values.idToLamViec ?? nv.idToLamViec ?? null,
-    })
-  }
 
   const handleCreate = async () => {
     try {
       const values = await formCreate.validateFields()
       setSubmitting(true)
 
-      let nhanVienId = values.nhanVienId
-
-      if (employeeMode === 'new') {
-        const nextId =
-          (nhanViens.length ? Math.max(...nhanViens.map((item) => Number(item.id) || 0)) : 0) + 1
-
-        const rsCreateNV = await apiCreateNV({
-          id: nextId,
-          maNv: values.nhanVienMoiMaNv?.trim() || values.tenDangNhap?.trim(),
-          hoTen: values.nhanVienMoiHoTen?.trim(),
-          hoTenKhongDau: values.nhanVienMoiHoTen?.trim(),
-          diaChi: '',
-          idPhongBan: null,
-          idChucVu: values.idChucVu ?? null,
-          idKipLamViec: values.idKipLamViec ?? null,
-          idToLamViec: values.idToLamViec ?? null,
-          ngayVaoLam: null,
-        })
-
-        if (!rsCreateNV?.status) {
-          toast.error(rsCreateNV?.message || 'Không tạo được nhân viên mới')
-          return
-        }
-
-        nhanVienId = rsCreateNV?.data?.id
-        await loadResources()
-      }
-
-      if (!nhanVienId) {
-        toast.error('Không xác định được nhân viên cho tài khoản')
-        return
-      }
-
-      if (employeeMode === 'existing') {
-        await updateNhanVienMeta(nhanVienId, values)
-      }
-
       const rs = await apiRegister({
-        tenDangNhap: values.tenDangNhap,
+        tenDangNhap: values.tenDangNhap?.trim(),
         matKhau: values.matKhau,
-        nhanVienId,
         idquyen: values.idquyen,
         isLock: values.isLock ?? 0,
       })
@@ -159,7 +75,6 @@ const ManageUser = () => {
         toast.success(rs.message || 'Tạo tài khoản thành công')
         setOpenCreate(false)
         formCreate.resetFields()
-        setEmployeeMode('existing')
         loadUsers()
       } else {
         toast.error(rs?.message || 'Tạo tài khoản thất bại')
@@ -170,16 +85,11 @@ const ManageUser = () => {
   }
 
   const handleOpenEdit = (record) => {
-    const nv = nhanViens.find((item) => item.id === record.nhanVienID)
     setEditingUser(record)
     formEdit.setFieldsValue({
       tenDangNhap: record.tenDangNhap,
       matKhau: '',
-      nhanVienId: record.nhanVienID,
       idquyen: record.idQuyen,
-      idChucVu: nv?.idChucVu,
-      idKipLamViec: nv?.idKipLamViec,
-      idToLamViec: nv?.idToLamViec,
       isLock: record.isLock ?? 0,
     })
   }
@@ -191,19 +101,16 @@ const ManageUser = () => {
       setSubmitting(true)
 
       const rs = await apiEditND(editingUser.idNguoiDung, {
-        tenDangNhap: values.tenDangNhap,
+        tenDangNhap: values.tenDangNhap?.trim(),
         matKhau: values.matKhau?.trim() ? values.matKhau : null,
-        nhanVienId: values.nhanVienId,
         idquyen: values.idquyen,
         isLock: values.isLock ?? 0,
       })
 
       if (rs?.status) {
-        await updateNhanVienMeta(values.nhanVienId, values)
         toast.success(rs.message || 'Cập nhật tài khoản thành công')
         setEditingUser(null)
         formEdit.resetFields()
-        loadResources()
         loadUsers()
       } else {
         toast.error(rs?.message || 'Cập nhật tài khoản thất bại')
@@ -228,36 +135,8 @@ const ManageUser = () => {
     [roles]
   )
 
-  const nhanVienOptions = useMemo(
-    () => nhanViens.map((nv) => ({ label: `${nv.maNv} - ${nv.hoTen}`, value: nv.id })),
-    [nhanViens]
-  )
-
-  const chucVuOptions = useMemo(
-    () => chucVus.map((item) => ({ label: item.tenChucVu, value: item.idChucVu })),
-    [chucVus]
-  )
-
-  const kipOptions = useMemo(
-    () => kipLamViecs.map((item) => ({ label: item.tenKipLamViec, value: item.idKipLamViec })),
-    [kipLamViecs]
-  )
-
-  const toOptions = useMemo(
-    () => toLamViecs.map((item) => ({ label: item.tenToLamViec, value: item.idToLamViec })),
-    [toLamViecs]
-  )
-
   const columns = [
-    { title: 'Tài khoản', dataIndex: 'tenDangNhap', key: 'tenDangNhap' },
-    {
-      title: 'Nhân viên',
-      key: 'nhanVien',
-      render: (_, record) => `${record.maNV || ''} - ${record.hoTen || ''}`,
-    },
-    { title: 'Chức vụ', dataIndex: 'tenChucVu', key: 'tenChucVu' },
-    { title: 'Kíp', dataIndex: 'tenKipLamViec', key: 'tenKipLamViec' },
-    { title: 'Tổ', dataIndex: 'tenToLamViec', key: 'tenToLamViec' },
+    { title: 'Tên đăng nhập', dataIndex: 'tenDangNhap', key: 'tenDangNhap' },
     {
       title: 'Quyền',
       dataIndex: 'tenQuyen',
@@ -327,71 +206,15 @@ const ManageUser = () => {
         onOk={handleCreate}
         confirmLoading={submitting}
       >
-        <Form
-          layout="vertical"
-          form={formCreate}
-          initialValues={{
-            isLock: 0,
-            nhanVienMoiMaNv: '',
-            nhanVienMoiHoTen: '',
-            idChucVu: undefined,
-            idKipLamViec: undefined,
-            idToLamViec: undefined,
-          }}
-        >
+        <Form layout="vertical" form={formCreate} initialValues={{ isLock: 0 }}>
           <Form.Item name="tenDangNhap" label="Tên đăng nhập" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
           <Form.Item name="matKhau" label="Mật khẩu" rules={[{ required: true }]}>
             <Input.Password />
           </Form.Item>
-          <Form.Item label="Nhân viên">
-            <Select
-              value={employeeMode}
-              onChange={(value) => {
-                setEmployeeMode(value)
-                if (value === 'existing') {
-                  formCreate.setFieldsValue({ nhanVienMoiMaNv: '', nhanVienMoiHoTen: '' })
-                } else {
-                  formCreate.setFieldsValue({
-                    nhanVienId: undefined,
-                    nhanVienMoiMaNv: formCreate.getFieldValue('tenDangNhap') || '',
-                  })
-                }
-              }}
-              options={[
-                { label: 'Chọn nhân viên có sẵn', value: 'existing' },
-                { label: 'Nhập nhân viên mới', value: 'new' },
-              ]}
-            />
-          </Form.Item>
-
-          {employeeMode === 'existing' ? (
-            <Form.Item name="nhanVienId" label="Nhân viên" rules={[{ required: true }]}>
-              <Select options={nhanVienOptions} showSearch optionFilterProp="label" />
-            </Form.Item>
-          ) : (
-            <>
-              <Form.Item name="nhanVienMoiMaNv" label="Mã nhân viên mới" rules={[{ required: true, message: 'Nhập mã nhân viên' }]}>
-                <Input placeholder="Ví dụ: HPDQ99999" />
-              </Form.Item>
-              <Form.Item name="nhanVienMoiHoTen" label="Tên nhân viên mới" rules={[{ required: true, message: 'Nhập tên nhân viên' }]}>
-                <Input placeholder="Ví dụ: Nguyễn Văn A" />
-              </Form.Item>
-            </>
-          )}
-
           <Form.Item name="idquyen" label="Quyền đăng nhập" rules={[{ required: true }]}>
             <Select options={roleOptions} />
-          </Form.Item>
-          <Form.Item name="idChucVu" label="Chức vụ">
-            <Select options={chucVuOptions} allowClear />
-          </Form.Item>
-          <Form.Item name="idKipLamViec" label="Kíp làm việc">
-            <Select options={kipOptions} allowClear />
-          </Form.Item>
-          <Form.Item name="idToLamViec" label="Tổ làm việc">
-            <Select options={toOptions} allowClear />
           </Form.Item>
           <Form.Item name="isLock" label="Trạng thái">
             <Select options={[{ label: 'Hoạt động', value: 0 }, { label: 'Khóa', value: 1 }]} />
@@ -416,20 +239,8 @@ const ManageUser = () => {
           <Form.Item name="matKhau" label="Mật khẩu mới (để trống nếu không đổi)">
             <Input.Password />
           </Form.Item>
-          <Form.Item name="nhanVienId" label="Nhân viên" rules={[{ required: true }]}>
-            <Select options={nhanVienOptions} showSearch optionFilterProp="label" />
-          </Form.Item>
           <Form.Item name="idquyen" label="Quyền" rules={[{ required: true }]}>
             <Select options={roleOptions} />
-          </Form.Item>
-          <Form.Item name="idChucVu" label="Chức vụ">
-            <Select options={chucVuOptions} allowClear />
-          </Form.Item>
-          <Form.Item name="idKipLamViec" label="Kíp làm việc">
-            <Select options={kipOptions} allowClear />
-          </Form.Item>
-          <Form.Item name="idToLamViec" label="Tổ làm việc">
-            <Select options={toOptions} allowClear />
           </Form.Item>
           <Form.Item name="isLock" label="Trạng thái">
             <Select options={[{ label: 'Hoạt động', value: 0 }, { label: 'Khóa', value: 1 }]} />

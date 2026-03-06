@@ -158,7 +158,7 @@ const ModalCreateVT = ({ render }) => {
       </div>
 
       <div className="w-full md:w-2/3 px-2 mx-auto mt-5">
-        <h2 className="text-2xl font-bold text-center mb-6">➕ Tạo vật tư bảo trì mới</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">➕ Tạo lệnh bảo trì mới</h2>
         
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(handleCreateVatTu)}>
           {/* Phân xưởng */}

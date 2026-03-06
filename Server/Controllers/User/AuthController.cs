@@ -26,7 +26,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         string mk = Encryptor.MD5Hash(request.Password);
-        var account = await _context.NguoiDungs.Include(x => x.NhanVien)
+        var account = await _context.NguoiDungs
                     .FirstOrDefaultAsync(x =>
                         x.TenDangNhap == request.Manv &&
                         x.MatKhau == mk &&
@@ -70,7 +70,7 @@ public class AuthController : ControllerBase
                 AccessToken = accessToken,
                 MaNv = account?.TenDangNhap,
                 Role = role,
-                HoTen = account?.NhanVien?.HoTen
+                HoTen = account?.TenDangNhap
             }
         };
 
@@ -105,29 +105,8 @@ public class AuthController : ControllerBase
             });
         }
 
-        var nhanVien = account.NhanVienId.HasValue
-            ? await _context.NhanViens.AsNoTracking().FirstOrDefaultAsync(x => x.Id == account.NhanVienId.Value)
-            : null;
-
         var quyen = account.Idquyen.HasValue
             ? await _context.Quyens.AsNoTracking().FirstOrDefaultAsync(x => x.Idquyen == account.Idquyen.Value)
-            : null;
-
-        var phongBan = nhanVien?.IdphongBan.HasValue == true
-            ? await _context.PhongBans.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.IdphongBan == nhanVien.IdphongBan!.Value)
-            : null;
-        var chucVu = nhanVien?.IdChucVu.HasValue == true
-            ? await _context.ChucVus.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.IdChucVu == nhanVien.IdChucVu!.Value)
-            : null;
-        var kipLamViec = nhanVien?.IdKipLamViec.HasValue == true
-            ? await _context.KipLamViecs.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.IdKipLamViec == nhanVien.IdKipLamViec!.Value)
-            : null;
-        var toLamViec = nhanVien?.IdToLamViec.HasValue == true
-            ? await _context.ToLamViecs.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.IdToLamViec == nhanVien.IdToLamViec!.Value)
             : null;
 
         var user = new NguoiDungValidation
@@ -135,13 +114,7 @@ public class AuthController : ControllerBase
             IDNguoiDung = account.IdnguoiDung,
             TenDangNhap = account.TenDangNhap ?? string.Empty,
             MatKhau = account.MatKhau ?? string.Empty,
-            NhanVienID = account.NhanVienId ?? 0,
-            MaNV = nhanVien?.MaNv ?? string.Empty,
-            HoTen = nhanVien?.HoTen ?? string.Empty,
-            TenPB = phongBan?.TenPhongBan ?? string.Empty,
-            TenChucVu = chucVu?.TenChucVu ?? string.Empty,
-            TenKipLamViec = kipLamViec?.TenKipLamViec ?? string.Empty,
-            TenToLamViec = toLamViec?.TenToLamViec ?? string.Empty,
+            HoTen = account.TenDangNhap ?? string.Empty,
             IDQuyen = account.Idquyen ?? 0,
             TenQuyen = quyen?.TenQuyen ?? string.Empty,
             IsLock = account.IsLock ?? 0

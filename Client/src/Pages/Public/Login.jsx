@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react'
 import { InputField, Button, Footer } from '../../components'
 import { apiLogin } from '../../apis/User/auth'
@@ -20,10 +19,9 @@ const Login = () => {
     password: '',
   })
   const [invalidFields, setInvalidFields] = useState([])
-  const [remember, setRemember] = useState(false) // ✅ trạng thái checkbox "Nhớ mật khẩu"
+  const [remember, setRemember] = useState(false)
   const navigate = useNavigate()
 
-  // 🧠 Khi load trang, kiểm tra xem có dữ liệu lưu trong localStorage không
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('rememberAccount'))
     if (saved && saved.manv && saved.password) {
@@ -31,53 +29,52 @@ const Login = () => {
       setRemember(true)
     }
   }, [])
+
   const handleSubmit = useCallback(async () => {
-  const data = { ...payload }
-  const invalids = validate(data, setInvalidFields)
+    const data = { ...payload }
+    const invalids = validate(data, setInvalidFields)
 
-  if (invalids === 0) {
-    try {
-      const rs = await apiLogin(data)
+    if (invalids === 0) {
+      try {
+        const rs = await apiLogin(data)
 
-      if (rs.status) {
-        const token = rs?.data?.accessToken
-        const manv = rs?.data?.maNv
-        const hoten = rs?.data?.hoTen
-        const role = rs?.data?.role
+        if (rs.status) {
+          const token = rs?.data?.accessToken
+          const username = rs?.data?.maNv
+          const displayName = rs?.data?.hoTen
+          const role = rs?.data?.role
 
-        // Nhớ mật khẩu
-        if (remember) {
-          localStorage.setItem('rememberAccount', JSON.stringify(data))
+          if (remember) {
+            localStorage.setItem('rememberAccount', JSON.stringify(data))
+          } else {
+            localStorage.removeItem('rememberAccount')
+          }
+
+          dispatch(
+            login({
+              isLoggedIn: true,
+              token,
+              userData: { maNv: username, hoTen: displayName, idQuyen: role },
+            })
+          )
+          localStorage.setItem('token', token || '')
+          dispatch(getCurent())
+
+          toast.success(rs.message)
+          navigate(`/${path.LAYOUT}/${path.MANAGE_TB}`)
         } else {
-          localStorage.removeItem('rememberAccount')
+          toast.error(rs.message || 'Đăng nhập thất bại!')
         }
-
-        dispatch(
-          login({
-            isLoggedIn: true,
-            token,
-            userData: { maNv: manv, hoTen: hoten, idQuyen: role },
-          })
-        )
-        localStorage.setItem('token', token || '')
-        dispatch(getCurent())
-
-        toast.success(rs.message)
-        navigate(`/${path.LAYOUT}/${path.MANAGE_TB}`)
-      } else {
-        toast.error(rs.message || 'Đăng nhập thất bại!')
+      } catch (err) {
+        dispatch(showModal({ isShowModal: false, modalChildren: null }))
+        toast.error(err?.message || 'Lỗi máy chủ hoặc kết nối thất bại!')
       }
-    } catch (err) {
-      dispatch(showModal({ isShowModal: false, modalChildren: null })) 
-      toast.error(err?.message || 'Lỗi máy chủ hoặc kết nối thất bại!')
     }
-  }
-}, [payload, remember])
+  }, [payload, remember, dispatch, navigate])
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex h-[calc(100vh-50px)]">
-        {/* LEFT - FORM LOGIN */}
         <div className="w-[25%] min-w-[320px] flex justify-center flex-col items-center bg-white z-10">
           <div className="mb-[50px]">
             <img src={logo} alt="logo" className="object-cover w-[300px]" />
@@ -95,7 +92,7 @@ const Login = () => {
 
             <div className="flex flex-col w-full p-4">
               <div className="flex flex-col w-full mb-2">
-                <span>Mã nhân viên</span>
+                <span>Tên đăng nhập</span>
                 <InputField
                   value={payload.manv}
                   nameKey="manv"
@@ -119,7 +116,6 @@ const Login = () => {
                 />
               </div>
 
-              {/* ✅ Checkbox “Nhớ mật khẩu” */}
               <div className="flex items-center mb-3">
                 <input
                   type="checkbox"
@@ -140,7 +136,6 @@ const Login = () => {
           </div>
         </div>
 
-        {/* RIGHT - BACKGROUND IMAGE */}
         <div className="relative flex-1 h-full">
           <img className="object-cover w-full h-full" src={BgHPDQ} alt="bg" />
         </div>

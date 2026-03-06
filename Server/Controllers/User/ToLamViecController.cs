@@ -84,15 +84,8 @@ public class ToLamViecController : ControllerBase
             return Ok(new ApiResponse<object> { Status = false, Message = "Khong tim thay to lam viec!" });
         }
 
-        var used = await _context.NhanViens.AnyAsync(x => x.IdToLamViec == id);
-        if (used)
-        {
-            return Ok(new ApiResponse<object> { Status = false, Message = "To lam viec dang duoc su dung!" });
-        }
-
         _context.ToLamViecs.Remove(row);
         await _context.SaveChangesAsync();
         return Ok(new ApiResponse<object> { Status = true, Message = "Xoa to lam viec thanh cong!" });
     }
 }
-

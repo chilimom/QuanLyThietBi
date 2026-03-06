@@ -60,7 +60,7 @@ const ModalViewVT = ({ data, onClose }) => {
           <RxCross2 size={22} />
         </button>
 
-        <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Thông tin chi tiết vật tư</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Thông tin chi tiết lệnh bảo trì</h2>
 
         <div className="grid grid-cols-2 gap-4 text-sm mb-6">
           <div className="bg-gray-50 p-3 rounded">

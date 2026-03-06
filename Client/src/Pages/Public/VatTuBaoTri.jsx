@@ -69,7 +69,7 @@ const VatTuBaoTri = () => {
       const rawData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : []
       setPhanXuongList(normalizePhanXuongList(rawData))
     } catch (error) {
-      console.error('? L?i load phân xu?ng:', error)
+      console.error('? L?i load phï¿½n xu?ng:', error)
       setPhanXuongList([])
     }
   }, [])

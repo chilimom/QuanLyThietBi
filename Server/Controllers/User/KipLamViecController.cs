@@ -84,15 +84,8 @@ public class KipLamViecController : ControllerBase
             return Ok(new ApiResponse<object> { Status = false, Message = "Khong tim thay kip lam viec!" });
         }
 
-        var used = await _context.NhanViens.AnyAsync(x => x.IdKipLamViec == id);
-        if (used)
-        {
-            return Ok(new ApiResponse<object> { Status = false, Message = "Kip lam viec dang duoc su dung!" });
-        }
-
         _context.KipLamViecs.Remove(row);
         await _context.SaveChangesAsync();
         return Ok(new ApiResponse<object> { Status = true, Message = "Xoa kip lam viec thanh cong!" });
     }
 }
-

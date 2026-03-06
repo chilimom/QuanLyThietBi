@@ -37,9 +37,3 @@ export const apiEditPass = (id, data) =>
     method: 'put',
     data,
   })
-
-export const apiGetMaNV = () =>
-  axios({
-    url: '/nguoidung/getMaNV',
-    method: 'get',
-  })

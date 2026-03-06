@@ -84,15 +84,8 @@ public class ChucVuController : ControllerBase
             return Ok(new ApiResponse<object> { Status = false, Message = "Khong tim thay chuc vu!" });
         }
 
-        var used = await _context.NhanViens.AnyAsync(x => x.IdChucVu == id);
-        if (used)
-        {
-            return Ok(new ApiResponse<object> { Status = false, Message = "Chuc vu dang duoc su dung!" });
-        }
-
         _context.ChucVus.Remove(row);
         await _context.SaveChangesAsync();
         return Ok(new ApiResponse<object> { Status = true, Message = "Xoa chuc vu thanh cong!" });
     }
 }
-
