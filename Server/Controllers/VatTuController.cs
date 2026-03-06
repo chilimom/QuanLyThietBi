@@ -215,6 +215,7 @@ namespace Server.Controllers
             [FromQuery] DateTime? begind,
             [FromQuery] DateTime? endd,
             [FromQuery] int? PhanXuongId = null, // ➕ THÊM
+            [FromQuery] string? keyword = null,
             [FromQuery] string Order = "desc")
 
         {
@@ -243,6 +244,19 @@ namespace Server.Controllers
             {
                 query = query.Where(x => x.PhanXuongId == PhanXuongId.Value);
             }
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var k = keyword.Trim().ToLower();
+                query = query.Where(x =>
+                    (x.Order ?? "").ToLower().Contains(k) ||
+                    (x.Eq ?? "").ToLower().Contains(k) ||
+                    (x.MaVT ?? "").ToLower().Contains(k) ||
+                    (x.TenVT ?? "").ToLower().Contains(k) ||
+                    (x.DonVi ?? "").ToLower().Contains(k) ||
+                    (x.SoLuong ?? "").ToLower().Contains(k) ||
+                    (x.PrMua ?? "").ToLower().Contains(k) ||
+                    (x.GhiChu ?? "").ToLower().Contains(k));
+            }
             query = Order.ToLower() == "asc"
                 ? query.OrderBy(x => x.NgayTao)
                 : query.OrderByDescending(x => x.NgayTao);
@@ -253,28 +267,54 @@ namespace Server.Controllers
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("DanhSachVatTu");
             worksheet.Style.Font.FontName = "Times New Roman";
-            worksheet.Style.Font.FontSize = 13;
+            worksheet.Style.Font.FontSize = 12;
 
             var headers = new[]
             {
-                "STT", "Số Order", "EQ", "Mã Vât Tư", "Tên Thiết Bị",
-                "Đơn Vị ", "Sooa Lượng", "Ngày Nhập", "PR Mua","Ghi Chú"
+                "STT", "Số Order", "EQ", "Tên Thiết Bị",
+                "Đơn Vị", "Ngày Nhập", "PR Mua", "Ghi Chú"
             };
+
+            // Dòng tiêu đề file
+            worksheet.Range(1, 1, 1, headers.Length).Merge();
+            var titleCell = worksheet.Cell(1, 1);
+            titleCell.Value = "DANH SÁCH VẬT TƯ BẢO TRÌ";
+            titleCell.Style.Font.Bold = true;
+            titleCell.Style.Font.FontSize = 16;
+            titleCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            titleCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            titleCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#D9E1F2");
+            worksheet.Row(1).Height = 26;
+
+            // Dòng thông tin bộ lọc
+            worksheet.Range(2, 1, 2, headers.Length).Merge();
+            var filterText = $"Từ ngày: {startDate:dd/MM/yyyy}  |  Đến ngày: {endDate:dd/MM/yyyy}";
+            if (PhanXuongId.HasValue) filterText += $"  |  Phân xưởng: {PhanXuongId.Value}";
+            if (!string.IsNullOrWhiteSpace(keyword)) filterText += $"  |  Từ khóa: {keyword}";
+            var filterCell = worksheet.Cell(2, 1);
+            filterCell.Value = filterText;
+            filterCell.Style.Font.Italic = true;
+            filterCell.Style.Font.FontColor = XLColor.FromHtml("#1F4E78");
+            filterCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            filterCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            filterCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#EEF3FB");
+            worksheet.Row(2).Height = 22;
 
             for (int i = 0; i < headers.Length; i++)
             {
-                var cell = worksheet.Cell(1, i + 1);
+                var cell = worksheet.Cell(3, i + 1);
                 cell.Value = headers[i];
                 cell.Style.Font.Bold = true;
-                cell.Style.Fill.BackgroundColor = XLColor.Yellow;
+                cell.Style.Font.FontColor = XLColor.White;
+                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#4472C4");
                 cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center; // Căn giữa theo chiều dọc
                 cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             }
-            worksheet.Row(1).Height = 28;
+            worksheet.Row(3).Height = 24;
 
 
-            int row = 2, stt = 1;
+            int row = 4, stt = 1;
 
             var orderGroups = vatTus
                 .GroupBy(x => x.Order)
@@ -287,11 +327,16 @@ namespace Server.Controllers
                 // Gộp vật tư theo đúng thứ tự nhập
                 var tenVTText = string.Join("\n",
                     group.Select(x => x.TenVT).Where(x => !string.IsNullOrWhiteSpace(x)));
+                var maVtText = string.Join("\n",
+                    group.Select(x => x.MaVT).Where(x => !string.IsNullOrWhiteSpace(x)));
+                var soLuongText = string.Join("\n",
+                    group.Select(x => x.SoLuong).Where(x => !string.IsNullOrWhiteSpace(x)));
 
 
                 worksheet.Cell(row, 1).Value = stt++;
                 worksheet.Cell(row, 2).Value = first.Order;
                 worksheet.Cell(row, 3).Value = first.Eq;
+                worksheet.Cell(row, 4).Value = maVtText;
                 //Tên thiết bị ( nhiều dòng)
                 var cellTenVT = worksheet.Cell(row, 5);
                 cellTenVT.Value = tenVTText;
@@ -300,41 +345,80 @@ namespace Server.Controllers
                 cellTenVT.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
 
                 worksheet.Cell(row, 6).Value = first.DonVi;
-                // worksheet.Cell(row, 7).Value = group.Sum(x => x.SoLuong);
-                worksheet.Cell(row, 8).Value = first.NgayTao?.ToString("dd/MM/yyyy");
+                worksheet.Cell(row, 7).Value = soLuongText;
+                worksheet.Cell(row, 8).Value = first.NgayTao;
+                worksheet.Cell(row, 8).Style.DateFormat.Format = "dd/MM/yyyy";
                 worksheet.Cell(row, 9).Value = first.PrMua;
                 worksheet.Cell(row, 10).Value = first.GhiChu;//link nếu có
                 // Canh lề trái
-                int[] centerCols = { 1, 2, 3, 4, 6, 7, 8, 9 };
+                int[] centerCols = { 1, 2, 3, 8 };
                 foreach (var col in centerCols)
                 {
                     worksheet.Cell(row, col).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     worksheet.Cell(row, col).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                 }
-                // Link
-                worksheet.Cell(row, 10).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-                worksheet.Cell(row, 10).Style.Font.FontColor = XLColor.Blue;
-                worksheet.Cell(row, 10).Style.Font.Underline = XLFontUnderlineValues.Single;
+
+                // Các cột nhiều dòng căn trái + xuống dòng
+                int[] wrapCols = { 4, 5, 6, 7, 9, 10 };
+                foreach (var col in wrapCols)
+                {
+                    var cell = worksheet.Cell(row, col);
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                    cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                    cell.Style.Alignment.WrapText = true;
+                }
+
+                // Gắn hyperlink nếu ghi chú là URL
+                var ghiChu = first.GhiChu?.Trim();
+                if (Uri.TryCreate(ghiChu, UriKind.Absolute, out var uri) &&
+                    (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                {
+                    var noteCell = worksheet.Cell(row, 10);
+                    noteCell.Value = "Mở liên kết";
+                    noteCell.SetHyperlink(new XLHyperlink(uri));
+                    noteCell.Style.Font.FontColor = XLColor.Blue;
+                    noteCell.Style.Font.Underline = XLFontUnderlineValues.Single;
+                }
+
                 //Viền dòng
                 for (int col = 1; col <= headers.Length; col++)
                 {
                     var cell = worksheet.Cell(row, col);
-                    // cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                    cell.Style.Fill.BackgroundColor = row % 2 == 0
+                        ? XLColor.White
+                        : XLColor.FromHtml("#F8FBFF");
                 }
 
                 worksheet.Row(row).AdjustToContents();
                 row++;
             }
-            // Auto chiều cao
-            worksheet.Columns().AdjustToContents();
+
+            // Chiều rộng cột cố định để tránh vỡ layout khi có URL dài
+            worksheet.Column(1).Width = 6;   // STT
+            worksheet.Column(2).Width = 16;  // Order
+            worksheet.Column(3).Width = 20;  // EQ
+            worksheet.Column(4).Width = 22;  // Mã VT
+            worksheet.Column(5).Width = 56;  // Tên thiết bị
+            worksheet.Column(6).Width = 24;  // Đơn vị
+            worksheet.Column(7).Width = 12;  // Số lượng
+            worksheet.Column(8).Width = 14;  // Ngày nhập
+            worksheet.Column(9).Width = 18;  // PR mua
+            worksheet.Column(10).Width = 34; // Ghi chú / Link
 
             // 6. Viền toàn bảng
-            var tableRange = worksheet.Range(1, 1, row - 1, headers.Length);
+            var tableRange = worksheet.Range(3, 1, row - 1, headers.Length);
             tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
             tableRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-            // 7. Freeze header
-            worksheet.SheetView.FreezeRows(1);
+            tableRange.SetAutoFilter();
+
+            // 7. Freeze 3 dòng đầu
+            worksheet.SheetView.FreezeRows(3);
+
+            // Căn trang in dễ đọc
+            worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+            worksheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
+            worksheet.PageSetup.FitToPages(1, 0);
 
             // 8.Xuất file
             using var stream = new MemoryStream();
