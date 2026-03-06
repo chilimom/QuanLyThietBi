@@ -510,18 +510,6 @@ const VatTuBaoTri = () => {
       align: 'center',
       render: v => v?.trim() || '-',
     },
-    // {
-    //   title: 'Phân xưởng',
-    //   dataIndex: 'tenPhanXuong',
-    //   key: 'tenPhanXuong',
-    //   width: 150,
-    //   render: (v, record) => (
-    //     <div className="text-center">
-    //       <div className="font-semibold text-sm">{v || `PX ${record.phanXuongId}`}</div>
-    //       <div className="text-xs text-gray-500">ID: {record.phanXuongId || '?'}</div>
-    //     </div>
-    //   ),
-    // },
     {
       title: 'Thao tác',
       key: 'action',
@@ -618,16 +606,6 @@ const VatTuBaoTri = () => {
               </>
             )}
           </button>
-          
-          {/* Nút Xuất Excel Direct (backup) */}
-          {/* <button
-            onClick={handleExportExcelDirect}
-            className="px-4 py-2 flex items-center justify-center gap-2 text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
-            disabled={loading}
-          >
-            <ImFileExcel className="text-xl" /> 
-            Xuất Excel (Direct)
-          </button> */}
         </div>
       </div>
 
@@ -727,18 +705,7 @@ const VatTuBaoTri = () => {
             </div>
           </div>
         </div>
-        
-        {/* Debug info */}
-        {/* <div className="mt-4 p-3 bg-gray-100 rounded-lg">
-          <div className="text-sm font-mono">
-            <div className="font-bold mb-1">Debug Info:</div>
-            <div>Items loaded: {vattus.length}</div>
-            <div>Total in DB: {counts}</div>
-            <div>Update trigger: {update ? 'ON' : 'OFF'}</div>
-            <div>API Status: {loading ? 'Loading...' : 'Ready'}</div>
-            <div>Export Status: {exportLoading ? 'Exporting...' : 'Ready'}</div>
-          </div>
-        </div> */}
+
         
         {apiError && (
           <Alert
