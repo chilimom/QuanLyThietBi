@@ -159,6 +159,7 @@ export const apiExportExcelvattu = ({ begind, endd, PhanXuongId }) =>
       begind,
       endd,
       PhanXuongId,
+      phanXuongId: PhanXuongId,
     },
     responseType: 'blob',
   })

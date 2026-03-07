@@ -215,6 +215,7 @@ namespace Server.Controllers
             [FromQuery] DateTime? begind,
             [FromQuery] DateTime? endd,
             [FromQuery] int? PhanXuongId = null, // ➕ THÊM
+            [FromQuery(Name = "phanXuongId")] int? phanXuongId = null,
             [FromQuery] string? keyword = null,
             [FromQuery] string Order = "desc")
 
@@ -233,6 +234,7 @@ namespace Server.Controllers
             DateTime defaultBegin = newestDate.AddDays(-30);
             DateTime startDate = (begind ?? defaultBegin).Date;
             DateTime endDate = (endd ?? newestDate).Date;
+            var selectedPhanXuongId = PhanXuongId ?? phanXuongId;
 
             // 2. Truy vấn & sắp xếp
             var query = _context.VatTuCntts
@@ -240,9 +242,9 @@ namespace Server.Controllers
                             x.NgayTao.Value.Date >= startDate &&
                             x.NgayTao.Value.Date <= endDate);
             // 🔴 SỬA: lọc theo phân xưởng nếu có
-            if (PhanXuongId.HasValue)
+            if (selectedPhanXuongId.HasValue)
             {
-                query = query.Where(x => x.PhanXuongId == PhanXuongId.Value);
+                query = query.Where(x => x.PhanXuongId == selectedPhanXuongId.Value);
             }
             if (!string.IsNullOrWhiteSpace(keyword))
             {
@@ -271,8 +273,8 @@ namespace Server.Controllers
 
             var headers = new[]
             {
-                "STT", "Số Order", "EQ", "Tên Thiết Bị",
-                "Đơn Vị", "Ngày Nhập", "PR Mua", "Ghi Chú"
+                "STT", "Số Order", "EQ", "Mã Vật Tư", "Tên Thiết Bị",
+                "Đơn Vị", "Số Lượng", "Ngày Nhập", "PR Mua", "Ghi Chú"
             };
 
             // Dòng tiêu đề file
@@ -289,7 +291,7 @@ namespace Server.Controllers
             // Dòng thông tin bộ lọc
             worksheet.Range(2, 1, 2, headers.Length).Merge();
             var filterText = $"Từ ngày: {startDate:dd/MM/yyyy}  |  Đến ngày: {endDate:dd/MM/yyyy}";
-            if (PhanXuongId.HasValue) filterText += $"  |  Phân xưởng: {PhanXuongId.Value}";
+            if (selectedPhanXuongId.HasValue) filterText += $"  |  Phân xưởng: {selectedPhanXuongId.Value}";
             if (!string.IsNullOrWhiteSpace(keyword)) filterText += $"  |  Từ khóa: {keyword}";
             var filterCell = worksheet.Cell(2, 1);
             filterCell.Value = filterText;
