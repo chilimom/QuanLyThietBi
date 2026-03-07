@@ -44,6 +44,23 @@ const STATUS_COLORS = {
   sua: 'orange',
 }
 
+const compactCellStyle = {
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  lineHeight: '1.35',
+}
+
+const renderCompactText = (value, fallback = 'Chưa cập nhật') => {
+  if (!value) return <span className="italic text-gray-400">{fallback}</span>
+  return (
+    <div title={value} style={compactCellStyle}>
+      {value}
+    </div>
+  )
+}
+
 const ManageThietBiKhuVuc = () => {
   const [loading, setLoading] = useState(false)
   const [statsLoading, setStatsLoading] = useState(false)
@@ -235,18 +252,20 @@ const ManageThietBiKhuVuc = () => {
     {
       title: 'Mã vật tư',
       dataIndex: 'maVatTu',
-      width: 120,
+      width: 110,
+      render: (value) => renderCompactText(value, 'Không có'),
     },
     {
       title: 'Tên vật tư',
       dataIndex: 'tenVatTu',
-      width: 220,
+      width: 170,
+      render: (value) => renderCompactText(value),
     },
     {
       title: 'Vị trí',
       dataIndex: 'viTri',
       width: 180,
-      render: (value) => value || <span className="italic text-gray-400">Chưa cập nhật</span>,
+      render: (value) => renderCompactText(value),
     },
     {
       title: 'Số lượng',
@@ -257,8 +276,8 @@ const ManageThietBiKhuVuc = () => {
     {
       title: 'Serial',
       dataIndex: 'serialNumber',
-      width: 160,
-      render: (value) => value || <span className="italic text-gray-400">Không có</span>,
+      width: 150,
+      render: (value) => renderCompactText(value, 'Không có'),
     },
     {
       title: 'Tình trạng',
@@ -278,8 +297,15 @@ const ManageThietBiKhuVuc = () => {
     {
       title: 'Lịch sử thay thế',
       dataIndex: 'lichSuThayThe',
-      width: 280,
-      render: (value) => value || <span className="italic text-gray-400">Không có</span>,
+      width: 250,
+      render: (value) =>
+        value ? (
+          <div className="whitespace-pre-line" style={compactCellStyle} title={value}>
+            {value}
+          </div>
+        ) : (
+          <span className="italic text-gray-400">Không có</span>
+        ),
     },
     {
       title: 'Cập nhật',
@@ -402,7 +428,7 @@ const ManageThietBiKhuVuc = () => {
             setLimit(nextLimit)
           },
         }}
-        scroll={{ y: 'calc(100vh - 420px)', x: 1700 }}
+        scroll={{ y: 'calc(100vh - 420px)', x: 1450 }}
       />
 
       <Modal
@@ -486,8 +512,8 @@ const ManageThietBiKhuVuc = () => {
             <Col span={24}>
               <Form.Item name="lichSuThayThe" label="Lịch sử thay thế">
                 <Input.TextArea
-                  rows={4}
-                  placeholder="Mô tả lịch sử thay thế linh kiện / thiết bị"
+                  rows={5}
+                  placeholder={`Nhập mỗi lần thay thế trên 1 dòng, ví dụ:\n- Thay ổ cứng ngày 30/06/2025\n- Nâng cấp RAM 8GB ngày 30/08/2025`}
                 />
               </Form.Item>
             </Col>
