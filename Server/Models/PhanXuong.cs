@@ -11,5 +11,7 @@ namespace Server.Models
         // ✅ BẮT BUỘC PHẢI CÓ
         public virtual ICollection<VatTuCntt> VatTuCntts { get; set; }
             = new List<VatTuCntt>();
+        public virtual ICollection<ThietBiKhuVuc> ThietBiKhuVucs { get; set; }
+            = new List<ThietBiKhuVuc>();
     }
 }

@@ -26,6 +26,7 @@ namespace Server.Models
         public virtual DbSet<KipLamViec> KipLamViecs { get; set; }
         public virtual DbSet<ToLamViec> ToLamViecs { get; set; }
         public DbSet<XuatVatTu> XuatVatTus { get; set; }
+        public virtual DbSet<ThietBiKhuVuc> ThietBiKhuVucs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -71,6 +72,26 @@ namespace Server.Models
                       .WithMany(p => p.VatTuCntts)
                       .HasForeignKey(d => d.PhanXuongId)
                       .HasConstraintName("FK_VatTuBaoTri_PhanXuong");
+            });
+
+            modelBuilder.Entity<ThietBiKhuVuc>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK_ThietBiKhuVuc");
+                entity.ToTable("ThietBiKhuVuc");
+
+                entity.Property(e => e.NhomThietBi).HasMaxLength(50);
+                entity.Property(e => e.MaVatTu).HasMaxLength(100);
+                entity.Property(e => e.TenVatTu).HasMaxLength(200);
+                entity.Property(e => e.ViTri).HasMaxLength(200);
+                entity.Property(e => e.SerialNumber).HasMaxLength(200);
+                entity.Property(e => e.TinhTrang).HasMaxLength(200);
+                entity.Property(e => e.LichSuThayThe).HasMaxLength(1000);
+                entity.Property(e => e.NgayCapNhat).HasColumnType("datetime");
+
+                entity.HasOne(d => d.PhanXuong)
+                      .WithMany(p => p.ThietBiKhuVucs)
+                      .HasForeignKey(d => d.PhanXuongId)
+                      .HasConstraintName("FK_ThietBiKhuVuc_PhanXuong");
             });
 
             // =======================

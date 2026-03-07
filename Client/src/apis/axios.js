@@ -25,8 +25,21 @@ const getPersistedToken = () => {
   }
 }
 
+const resolveBaseUrl = () => {
+  const envBaseUrl = (import.meta.env.VITE_API_URI || '').trim()
+  if (typeof window === 'undefined') return envBaseUrl || '/api'
+
+  const isLocalClient =
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  const isLegacyRemoteApi = /^https?:\/\/10\.192\.72\.45:5173\/api\/?$/i.test(envBaseUrl)
+
+  // Safety fallback: when running local UI, always use local proxy /api
+  if (isLocalClient && isLegacyRemoteApi) return '/api'
+  return envBaseUrl || '/api'
+}
+
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_URI,
+  baseURL: resolveBaseUrl(),
 })
 
 instance.interceptors.request.use(

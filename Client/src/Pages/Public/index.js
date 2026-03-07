@@ -1,4 +1,5 @@
 export { default as ManageThietBi } from './ManageThietBi'
+export { default as ManageThietBiKhuVuc } from './ManageThietBiKhuVuc'
 export { default as VatTuBaoTri } from './VatTuBaoTri'
 export { default as Login } from './Login'
 export { default as ManageUser } from './ManageUser'

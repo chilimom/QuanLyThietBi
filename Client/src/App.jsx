@@ -10,6 +10,7 @@ import {
   AdminWorkshop,
   Login,
   ManageThietBi,
+  ManageThietBiKhuVuc,
   ManageUser,
   VatTuBaoTri,
 } from './Pages/Public'
@@ -30,6 +31,7 @@ function App() {
         <Route path={path.LAYOUT} element={<Layout />}>
           <Route path={path.MANAGE_TB} element={<ManageThietBi />} />
           <Route path={path.MANAGE_VT} element={<VatTuBaoTri />} />
+          <Route path={path.MANAGE_TB_KHU_VUC} element={<ManageThietBiKhuVuc />} />
           <Route path={path.MANAGE_USER} element={<ManageUser />} />
           <Route path={path.ADMIN_LOGIN_ROLE} element={<AdminLoginRole />} />
           <Route path={path.ADMIN_POSITION} element={<AdminPosition />} />

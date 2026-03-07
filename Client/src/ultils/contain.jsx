@@ -4,6 +4,7 @@ import path from './path'
 const {
   TbCircleNumber1Filled,
   TbCircleNumber2Filled,
+  TbCircleNumber3Filled,
   FaUser,
   FaUserEdit,
   MdGroups,
@@ -26,6 +27,13 @@ export const HomeSidebar = (current) => [
     text: 'T\u1ea1o L\u1ec7nh B\u1ea3o Tr\u00ec',
     icon: <TbCircleNumber2Filled size={24} />,
     path: `/${path.LAYOUT}/${path.MANAGE_VT}`,
+  },
+  {
+    id: 9,
+    type: 'SINGLE',
+    text: 'Thi\u1ebft B\u1ecb Theo Khu V\u1ef1c',
+    icon: <TbCircleNumber3Filled size={24} />,
+    path: `/${path.LAYOUT}/${path.MANAGE_TB_KHU_VUC}`,
   },
   ...(current?.idQuyen === 4
     ? [
