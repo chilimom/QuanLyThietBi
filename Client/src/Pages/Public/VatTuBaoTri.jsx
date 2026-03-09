@@ -658,7 +658,7 @@ const VatTuBaoTri = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h3 className="font-bold text-blue-800 text-xl flex items-center gap-2">
-              <span className="text-2xl">📊</span> DANH SÁCH VẬT TƯ BẢO TRÌ
+              <span className="text-2xl">📊</span> DANH SÁCH LỆNH BẢO TRÌ
             </h3>
             <div className="text-blue-600 mt-2 flex items-center gap-4">
               {loading ? (
