@@ -77,7 +77,7 @@ app.UseAuthorization();  // Bắt buộc nếu có [Authorize]
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<QLThietBiContext>();
-    var ensureThietBiKhuVucSql = @"
+var ensureThietBiKhuVucSql = @"
 IF OBJECT_ID('dbo.ThietBiKhuVuc', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.ThietBiKhuVuc
@@ -114,6 +114,73 @@ BEGIN
 END;";
 
     db.Database.ExecuteSqlRaw(ensureThietBiKhuVucSql);
+
+    var ensureNguoiDungPhanXuongSql = @"
+IF COL_LENGTH('dbo.NguoiDung', 'PhanXuongId') IS NULL
+BEGIN
+    ALTER TABLE dbo.NguoiDung ADD PhanXuongId INT NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_NguoiDung_PhanXuong'
+      AND parent_object_id = OBJECT_ID('dbo.NguoiDung')
+)
+BEGIN
+    ALTER TABLE dbo.NguoiDung
+    ADD CONSTRAINT FK_NguoiDung_PhanXuong FOREIGN KEY (PhanXuongId)
+    REFERENCES dbo.PhanXuong(PhanXuongId);
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_NguoiDung_PhanXuongId'
+      AND object_id = OBJECT_ID('dbo.NguoiDung')
+)
+BEGIN
+    CREATE INDEX IX_NguoiDung_PhanXuongId ON dbo.NguoiDung(PhanXuongId);
+END;";
+
+    db.Database.ExecuteSqlRaw(ensureNguoiDungPhanXuongSql);
+
+    var ensureNguoiDungPhanXuongMappingSql = @"
+IF OBJECT_ID('dbo.NguoiDungPhanXuong', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.NguoiDungPhanXuong
+    (
+        NguoiDungId INT NOT NULL,
+        PhanXuongId INT NOT NULL,
+        CONSTRAINT PK_NguoiDungPhanXuong PRIMARY KEY (NguoiDungId, PhanXuongId),
+        CONSTRAINT FK_NguoiDungPhanXuong_NguoiDung FOREIGN KEY (NguoiDungId)
+            REFERENCES dbo.NguoiDung(IDNguoiDung) ON DELETE CASCADE,
+        CONSTRAINT FK_NguoiDungPhanXuong_PhanXuong FOREIGN KEY (PhanXuongId)
+            REFERENCES dbo.PhanXuong(PhanXuongId) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'IX_NguoiDungPhanXuong_PhanXuongId'
+      AND object_id = OBJECT_ID('dbo.NguoiDungPhanXuong')
+)
+BEGIN
+    CREATE INDEX IX_NguoiDungPhanXuong_PhanXuongId ON dbo.NguoiDungPhanXuong(PhanXuongId);
+END;
+
+INSERT INTO dbo.NguoiDungPhanXuong (NguoiDungId, PhanXuongId)
+SELECT nd.IDNguoiDung, nd.PhanXuongId
+FROM dbo.NguoiDung nd
+WHERE nd.PhanXuongId IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1
+      FROM dbo.NguoiDungPhanXuong map
+      WHERE map.NguoiDungId = nd.IDNguoiDung
+        AND map.PhanXuongId = nd.PhanXuongId
+  );";
+
+    db.Database.ExecuteSqlRaw(ensureNguoiDungPhanXuongMappingSql);
 }
 var summaries = new[]
 {

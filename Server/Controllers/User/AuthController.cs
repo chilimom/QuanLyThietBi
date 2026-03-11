@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-
-using Server.Models;
-using Azure;
-using Server.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Server.Helpers;
+using Server.Models;
 using System.Security.Claims;
 
 [Route("api/[controller]")]
@@ -27,10 +25,14 @@ public class AuthController : ControllerBase
     {
         string mk = Encryptor.MD5Hash(request.Password);
         var account = await _context.NguoiDungs
-                    .FirstOrDefaultAsync(x =>
-                        x.TenDangNhap == request.Manv &&
-                        x.MatKhau == mk &&
-                        x.IsLock == 0);
+            .Include(x => x.PhanXuong)
+            .Include(x => x.NguoiDungPhanXuongs)
+                .ThenInclude(x => x.PhanXuong)
+            .FirstOrDefaultAsync(x =>
+                x.TenDangNhap == request.Manv &&
+                x.MatKhau == mk &&
+                x.IsLock == 0);
+
         if (account == null || account.MatKhau != mk)
         {
             return Ok(new ApiResponse<object>
@@ -50,16 +52,28 @@ public class AuthController : ControllerBase
                 Data = null
             });
         }
+
         int role = account.Idquyen ?? 0;
+        var assignedPhanXuongs = account.NguoiDungPhanXuongs
+            .Select(x => new { x.PhanXuongId, x.PhanXuong.TenPhanXuong })
+            .Distinct()
+            .ToList();
+
+        if (assignedPhanXuongs.Count == 0 && account.PhanXuongId.HasValue)
+        {
+            assignedPhanXuongs.Add(new
+            {
+                PhanXuongId = account.PhanXuongId.Value,
+                TenPhanXuong = account.PhanXuong?.TenPhanXuong
+            });
+        }
 
         var accessToken = JwtHelper.GenerateToken(
             account.TenDangNhap ?? "",
             role,
+            assignedPhanXuongs.Select(x => x.PhanXuongId),
             _config["Jwt:Key"]!,
-            _config["Jwt:Issuer"]!
-        );
-
-        await _context.SaveChangesAsync();
+            _config["Jwt:Issuer"]!);
 
         var response = new ApiResponse<LoginReponse>
         {
@@ -68,9 +82,17 @@ public class AuthController : ControllerBase
             Data = new LoginReponse
             {
                 AccessToken = accessToken,
-                MaNv = account?.TenDangNhap,
+                MaNv = account.TenDangNhap ?? "",
                 Role = role,
-                HoTen = account?.TenDangNhap
+                HoTen = account.TenDangNhap,
+                PhanXuongId = assignedPhanXuongs.FirstOrDefault()?.PhanXuongId,
+                TenPhanXuong = assignedPhanXuongs.FirstOrDefault()?.TenPhanXuong,
+                PhanXuongIds = assignedPhanXuongs.Select(x => x.PhanXuongId).ToList(),
+                TenPhanXuongs = assignedPhanXuongs
+                    .Select(x => x.TenPhanXuong)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Cast<string>()
+                    .ToList()
             }
         };
 
@@ -94,6 +116,9 @@ public class AuthController : ControllerBase
 
         var account = await _context.NguoiDungs
             .AsNoTracking()
+            .Include(x => x.PhanXuong)
+            .Include(x => x.NguoiDungPhanXuongs)
+                .ThenInclude(x => x.PhanXuong)
             .FirstOrDefaultAsync(x => x.TenDangNhap == username);
 
         if (account == null)
@@ -109,6 +134,20 @@ public class AuthController : ControllerBase
             ? await _context.Quyens.AsNoTracking().FirstOrDefaultAsync(x => x.Idquyen == account.Idquyen.Value)
             : null;
 
+        var assignedPhanXuongs = account.NguoiDungPhanXuongs
+            .Select(x => new { x.PhanXuongId, x.PhanXuong.TenPhanXuong })
+            .Distinct()
+            .ToList();
+
+        if (assignedPhanXuongs.Count == 0 && account.PhanXuongId.HasValue)
+        {
+            assignedPhanXuongs.Add(new
+            {
+                PhanXuongId = account.PhanXuongId.Value,
+                TenPhanXuong = account.PhanXuong?.TenPhanXuong
+            });
+        }
+
         var user = new NguoiDungValidation
         {
             IDNguoiDung = account.IdnguoiDung,
@@ -117,7 +156,15 @@ public class AuthController : ControllerBase
             HoTen = account.TenDangNhap ?? string.Empty,
             IDQuyen = account.Idquyen ?? 0,
             TenQuyen = quyen?.TenQuyen ?? string.Empty,
-            IsLock = account.IsLock ?? 0
+            IsLock = account.IsLock ?? 0,
+            PhanXuongId = assignedPhanXuongs.FirstOrDefault()?.PhanXuongId,
+            TenPhanXuong = assignedPhanXuongs.FirstOrDefault()?.TenPhanXuong,
+            PhanXuongIds = assignedPhanXuongs.Select(x => x.PhanXuongId).ToList(),
+            TenPhanXuongs = assignedPhanXuongs
+                .Select(x => x.TenPhanXuong)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Cast<string>()
+                .ToList()
         };
 
         return Ok(new ApiResponse<NguoiDungValidation>

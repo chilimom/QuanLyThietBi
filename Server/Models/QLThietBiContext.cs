@@ -18,6 +18,7 @@ namespace Server.Models
         public virtual DbSet<ThietBiCntt> ThietBiCntts { get; set; }
         public virtual DbSet<VatTuCntt> VatTuCntts { get; set; }
         public virtual DbSet<NguoiDung> NguoiDungs { get; set; }
+        public virtual DbSet<NguoiDungPhanXuong> NguoiDungPhanXuongs { get; set; }
         public virtual DbSet<NhanVien> NhanViens { get; set; }
         public virtual DbSet<PhongBan> PhongBans { get; set; }
         public virtual DbSet<Quyen> Quyens { get; set; }
@@ -106,6 +107,7 @@ namespace Server.Models
                 entity.Property(e => e.Idquyen).HasColumnName("IDQuyen");
                 entity.Property(e => e.MatKhau).HasMaxLength(50);
                 entity.Property(e => e.NhanVienId).HasColumnName("NhanVienID");
+                entity.Property(e => e.PhanXuongId).HasColumnName("PhanXuongId");
                 entity.Property(e => e.TenDangNhap)
                       .HasMaxLength(50)
                       .IsUnicode(false);
@@ -114,6 +116,27 @@ namespace Server.Models
                       .WithMany(p => p.NguoiDungs)
                       .HasForeignKey(d => d.NhanVienId)
                       .HasConstraintName("FK_NguoiDung_NhanVien");
+
+                entity.HasOne(d => d.PhanXuong)
+                      .WithMany(p => p.NguoiDungs)
+                      .HasForeignKey(d => d.PhanXuongId)
+                      .HasConstraintName("FK_NguoiDung_PhanXuong");
+            });
+
+            modelBuilder.Entity<NguoiDungPhanXuong>(entity =>
+            {
+                entity.HasKey(e => new { e.NguoiDungId, e.PhanXuongId });
+                entity.ToTable("NguoiDungPhanXuong");
+
+                entity.HasOne(d => d.NguoiDung)
+                      .WithMany(p => p.NguoiDungPhanXuongs)
+                      .HasForeignKey(d => d.NguoiDungId)
+                      .HasConstraintName("FK_NguoiDungPhanXuong_NguoiDung");
+
+                entity.HasOne(d => d.PhanXuong)
+                      .WithMany(p => p.NguoiDungPhanXuongs)
+                      .HasForeignKey(d => d.PhanXuongId)
+                      .HasConstraintName("FK_NguoiDungPhanXuong_PhanXuong");
             });
 
             // =======================

@@ -1,11 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
+using Server.Helpers;
 using Server.Models;
-// using ClosedXML.Excel;
+using Server.Models.PhanXuongDtos;
 
 namespace Server.Controllers
-
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -18,13 +18,24 @@ namespace Server.Controllers
             _context = context;
         }
 
-        // ==========================
-        // 1) GET ALL
-        // ==========================
+        [Authorize]
         [HttpGet("getAll")]
         public async Task<IActionResult> GetAll()
         {
-            var data = await _context.PhanXuongs
+            var query = _context.PhanXuongs.AsQueryable();
+
+            if (!UserAccessHelper.IsAdmin(User))
+            {
+                var assignedPhanXuongIds = UserAccessHelper.GetPhanXuongIds(User);
+                if (assignedPhanXuongIds.Count == 0)
+                {
+                    return Forbid();
+                }
+
+                query = query.Where(x => assignedPhanXuongIds.Contains(x.PhanXuongId));
+            }
+
+            var data = await query
                 .Select(x => new
                 {
                     x.PhanXuongId,
@@ -32,74 +43,97 @@ namespace Server.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(data);  // React nhận thẳng array
+            return Ok(data);
         }
 
-        // ==========================
-        // 2) GET by ID
-        // ==========================
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var px = await _context.PhanXuongs.FindAsync(id);
+            if (!UserAccessHelper.IsAdmin(User))
+            {
+                var assignedPhanXuongIds = UserAccessHelper.GetPhanXuongIds(User);
+                if (!assignedPhanXuongIds.Contains(id))
+                {
+                    return Forbid();
+                }
+            }
+
+            var px = await _context.PhanXuongs
+                .Select(x => new
+                {
+                    x.PhanXuongId,
+                    x.TenPhanXuong
+                })
+                .FirstOrDefaultAsync(x => x.PhanXuongId == id);
 
             if (px == null)
-                return NotFound("Không tìm thấy Phân Xưởng");
+                return NotFound("Khong tim thay phan xuong");
 
             return Ok(px);
         }
 
-        // ==========================
-        // 3) CREATE
-        // ==========================
         [HttpPost("create")]
         [Authorize(Roles = "4")]
-        public async Task<IActionResult> Create([FromBody] PhanXuong model)
+        public async Task<IActionResult> Create([FromBody] CreatePhanXuongRequest model)
         {
             if (!ModelState.IsValid)
-                return BadRequest("Dữ liệu không hợp lệ!");
+                return ValidationProblem(ModelState);
 
             if (string.IsNullOrWhiteSpace(model.TenPhanXuong))
-                return BadRequest("Tên phân xưởng không được để trống!");
+                return BadRequest("Ten phan xuong khong duoc de trong");
 
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"INSERT INTO PhanXuong (TenPhanXuong) VALUES ({model.TenPhanXuong})"
-            );
+            var phanXuong = new PhanXuong
+            {
+                TenPhanXuong = model.TenPhanXuong.Trim()
+            };
+
+            _context.PhanXuongs.Add(phanXuong);
             await _context.SaveChangesAsync();
 
-            return Ok(new
+            return CreatedAtAction(nameof(GetById), new { id = phanXuong.PhanXuongId }, new
             {
                 status = true,
-                message = "Thêm Phân Xưởng thành công!"
+                message = "Them phan xuong thanh cong",
+                data = new
+                {
+                    phanXuong.PhanXuongId,
+                    phanXuong.TenPhanXuong
+                }
             });
         }
 
-        // ==========================
-        // 4) UPDATE
-        // ==========================
         [HttpPut("update/{id}")]
         [Authorize(Roles = "4")]
-        public async Task<IActionResult> Update(int id, [FromBody] PhanXuong model)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdatePhanXuongRequest model)
         {
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
             var px = await _context.PhanXuongs.FindAsync(id);
 
             if (px == null)
-                return NotFound("Không tìm thấy Phân Xưởng!");
+                return NotFound("Khong tim thay phan xuong");
 
-            px.TenPhanXuong = model.TenPhanXuong;
+            if (string.IsNullOrWhiteSpace(model.TenPhanXuong))
+                return BadRequest("Ten phan xuong khong duoc de trong");
+
+            px.TenPhanXuong = model.TenPhanXuong.Trim();
 
             await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 status = true,
-                message = "Cập nhật thành công!"
+                message = "Cap nhat thanh cong",
+                data = new
+                {
+                    px.PhanXuongId,
+                    px.TenPhanXuong
+                }
             });
         }
 
-        // ==========================
-        // 5) DELETE
-        // ==========================
         [HttpDelete("delete/{id}")]
         [Authorize(Roles = "4")]
         public async Task<IActionResult> Delete(int id)
@@ -107,7 +141,7 @@ namespace Server.Controllers
             var px = await _context.PhanXuongs.FindAsync(id);
 
             if (px == null)
-                return NotFound("Không tìm thấy Phân Xưởng!");
+                return NotFound("Khong tim thay phan xuong");
 
             _context.PhanXuongs.Remove(px);
             await _context.SaveChangesAsync();
@@ -115,7 +149,7 @@ namespace Server.Controllers
             return Ok(new
             {
                 status = true,
-                message = "Xóa thành công!"
+                message = "Xoa thanh cong"
             });
         }
     }

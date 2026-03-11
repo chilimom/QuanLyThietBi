@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace Server.Models
 {
     public class NguoiDungValidation
@@ -14,5 +9,9 @@ namespace Server.Models
         public int IDQuyen { get; set; }
         public string? TenQuyen { get; set; }
         public int IsLock { get; set; }
+        public int? PhanXuongId { get; set; }
+        public string? TenPhanXuong { get; set; }
+        public List<int> PhanXuongIds { get; set; } = new();
+        public List<string> TenPhanXuongs { get; set; } = new();
     }
 }

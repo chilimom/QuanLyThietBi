@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Server.Helpers;
 using Server.Models;
 
 namespace Server.Controllers
@@ -22,6 +24,7 @@ namespace Server.Controllers
             _context = context;
         }
 
+        [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] ThietBiKhuVucValidation request)
         {
@@ -33,6 +36,12 @@ namespace Server.Controllers
                     Message = message,
                     Data = null
                 });
+            }
+
+            var scopedPhanXuongIds = GetScopedPhanXuongIds();
+            if (scopedPhanXuongIds.Count > 0 && !scopedPhanXuongIds.Contains(request.PhanXuongId))
+            {
+                return Forbid();
             }
 
             var phanXuongExists = await _context.PhanXuongs.AnyAsync(x => x.PhanXuongId == request.PhanXuongId);
@@ -71,6 +80,7 @@ namespace Server.Controllers
             });
         }
 
+        [Authorize]
         [HttpGet("get")]
         public async Task<IActionResult> Get(
             [FromQuery] int? phanXuongId = null,
@@ -86,7 +96,12 @@ namespace Server.Controllers
                 .Include(x => x.PhanXuong)
                 .AsQueryable();
 
-            if (phanXuongId.HasValue)
+            var scopedPhanXuongIds = GetScopedPhanXuongIds();
+            if (scopedPhanXuongIds.Count > 0)
+            {
+                query = query.Where(x => scopedPhanXuongIds.Contains(x.PhanXuongId));
+            }
+            else if (phanXuongId.HasValue)
             {
                 query = query.Where(x => x.PhanXuongId == phanXuongId.Value);
             }
@@ -146,6 +161,7 @@ namespace Server.Controllers
             });
         }
 
+        [Authorize]
         [HttpPut("update/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ThietBiKhuVucValidation request)
         {
@@ -159,6 +175,12 @@ namespace Server.Controllers
                 });
             }
 
+            var scopedPhanXuongIds = GetScopedPhanXuongIds();
+            if (scopedPhanXuongIds.Count > 0 && !scopedPhanXuongIds.Contains(request.PhanXuongId))
+            {
+                return Forbid();
+            }
+
             var entity = await _context.ThietBiKhuVucs.FindAsync(id);
             if (entity == null)
             {
@@ -168,6 +190,11 @@ namespace Server.Controllers
                     Message = "Khong tim thay thiet bi.",
                     Data = null
                 });
+            }
+
+            if (scopedPhanXuongIds.Count > 0 && !scopedPhanXuongIds.Contains(entity.PhanXuongId))
+            {
+                return Forbid();
             }
 
             var phanXuongExists = await _context.PhanXuongs.AnyAsync(x => x.PhanXuongId == request.PhanXuongId);
@@ -203,6 +230,7 @@ namespace Server.Controllers
             });
         }
 
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -217,6 +245,12 @@ namespace Server.Controllers
                 });
             }
 
+            var scopedPhanXuongIds = GetScopedPhanXuongIds();
+            if (scopedPhanXuongIds.Count > 0 && !scopedPhanXuongIds.Contains(entity.PhanXuongId))
+            {
+                return Forbid();
+            }
+
             _context.ThietBiKhuVucs.Remove(entity);
             await _context.SaveChangesAsync();
 
@@ -228,6 +262,7 @@ namespace Server.Controllers
             });
         }
 
+        [Authorize]
         [HttpGet("statistics")]
         public async Task<IActionResult> Statistics([FromQuery] int? phanXuongId = null)
         {
@@ -235,7 +270,12 @@ namespace Server.Controllers
                 .Include(x => x.PhanXuong)
                 .AsQueryable();
 
-            if (phanXuongId.HasValue)
+            var scopedPhanXuongIds = GetScopedPhanXuongIds();
+            if (scopedPhanXuongIds.Count > 0)
+            {
+                query = query.Where(x => scopedPhanXuongIds.Contains(x.PhanXuongId));
+            }
+            else if (phanXuongId.HasValue)
             {
                 query = query.Where(x => x.PhanXuongId == phanXuongId.Value);
             }
@@ -315,6 +355,16 @@ namespace Server.Controllers
             if (normalized.Equals("May tinh van hanh", StringComparison.OrdinalIgnoreCase)) return "MayTinhVanHanh";
             if (normalized.Equals("Thiet bi CCTV", StringComparison.OrdinalIgnoreCase)) return "ThietBiCCTV";
             return normalized;
+        }
+
+        private IReadOnlyCollection<int> GetScopedPhanXuongIds()
+        {
+            if (UserAccessHelper.IsAdmin(User))
+            {
+                return Array.Empty<int>();
+            }
+
+            return UserAccessHelper.GetPhanXuongIds(User);
         }
     }
 }

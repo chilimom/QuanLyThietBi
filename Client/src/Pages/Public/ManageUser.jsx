@@ -2,15 +2,24 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import { apiDeleteND, apiEditND, apiGetAllNguoiDung, apiGetQuyen, apiRegister } from '../../apis'
+import {
+  apiDeleteND,
+  apiEditND,
+  apiGetAllNguoiDung,
+  apiGetPhanXuong,
+  apiGetQuyen,
+  apiRegister,
+} from '../../apis'
 
 const pageSize = +import.meta.env.VITE_LIMIT || 20
+const ADMIN_ROLE_ID = 4
 
 const ManageUser = () => {
   const { current } = useSelector((state) => state.user)
 
   const [users, setUsers] = useState([])
   const [roles, setRoles] = useState([])
+  const [phanXuongs, setPhanXuongs] = useState([])
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -36,7 +45,7 @@ const ManageUser = () => {
     } catch {
       setUsers([])
       setTotal(0)
-      toast.error('Không tải được danh sách tài khoản')
+      toast.error('Khong tai duoc danh sach tai khoan')
     } finally {
       setLoading(false)
     }
@@ -47,13 +56,25 @@ const ManageUser = () => {
       const rsRole = await apiGetQuyen()
       setRoles(rsRole?.data || [])
     } catch {
-      toast.error('Không tải được danh sách quyền')
+      toast.error('Khong tai duoc danh sach quyen')
+    }
+  }, [])
+
+  const loadPhanXuongs = useCallback(async () => {
+    try {
+      const rs = await apiGetPhanXuong()
+      const data = Array.isArray(rs) ? rs : rs?.data || []
+      setPhanXuongs(data)
+    } catch {
+      setPhanXuongs([])
+      toast.error('Khong tai duoc danh sach phan xuong')
     }
   }, [])
 
   useEffect(() => {
     loadRoles()
-  }, [loadRoles])
+    loadPhanXuongs()
+  }, [loadRoles, loadPhanXuongs])
 
   useEffect(() => {
     loadUsers()
@@ -69,15 +90,17 @@ const ManageUser = () => {
         matKhau: values.matKhau,
         idquyen: values.idquyen,
         isLock: values.isLock ?? 0,
+        phanXuongIds: values.phanXuongIds || [],
+        phanXuongId: values.phanXuongIds?.[0] ?? null,
       })
 
       if (rs?.status) {
-        toast.success(rs.message || 'Tạo tài khoản thành công')
+        toast.success(rs.message || 'Tao tai khoan thanh cong')
         setOpenCreate(false)
         formCreate.resetFields()
         loadUsers()
       } else {
-        toast.error(rs?.message || 'Tạo tài khoản thất bại')
+        toast.error(rs?.message || 'Tao tai khoan that bai')
       }
     } finally {
       setSubmitting(false)
@@ -91,6 +114,7 @@ const ManageUser = () => {
       matKhau: '',
       idquyen: record.idQuyen,
       isLock: record.isLock ?? 0,
+      phanXuongIds: record.phanXuongIds?.length ? record.phanXuongIds : record.phanXuongId ? [record.phanXuongId] : [],
     })
   }
 
@@ -105,15 +129,17 @@ const ManageUser = () => {
         matKhau: values.matKhau?.trim() ? values.matKhau : null,
         idquyen: values.idquyen,
         isLock: values.isLock ?? 0,
+        phanXuongIds: values.phanXuongIds || [],
+        phanXuongId: values.phanXuongIds?.[0] ?? null,
       })
 
       if (rs?.status) {
-        toast.success(rs.message || 'Cập nhật tài khoản thành công')
+        toast.success(rs.message || 'Cap nhat tai khoan thanh cong')
         setEditingUser(null)
         formEdit.resetFields()
         loadUsers()
       } else {
-        toast.error(rs?.message || 'Cập nhật tài khoản thất bại')
+        toast.error(rs?.message || 'Cap nhat tai khoan that bai')
       }
     } finally {
       setSubmitting(false)
@@ -123,10 +149,10 @@ const ManageUser = () => {
   const handleDelete = async (id) => {
     const rs = await apiDeleteND(id)
     if (rs?.status) {
-      toast.success(rs.message || 'Xóa tài khoản thành công')
+      toast.success(rs.message || 'Xoa tai khoan thanh cong')
       loadUsers()
     } else {
-      toast.error(rs?.message || 'Xóa tài khoản thất bại')
+      toast.error(rs?.message || 'Xoa tai khoan that bai')
     }
   }
 
@@ -135,31 +161,50 @@ const ManageUser = () => {
     [roles]
   )
 
+  const phanXuongOptions = useMemo(
+    () =>
+      phanXuongs.map((item) => ({
+        label: `${item.tenPhanXuong || item.TenPhanXuong}`,
+        value: item.phanXuongId ?? item.PhanXuongId,
+      })),
+    [phanXuongs]
+  )
+
   const columns = [
-    { title: 'Tên đăng nhập', dataIndex: 'tenDangNhap', key: 'tenDangNhap' },
+    { title: 'Ten dang nhap', dataIndex: 'tenDangNhap', key: 'tenDangNhap' },
     {
-      title: 'Quyền',
+      title: 'Quyen',
       dataIndex: 'tenQuyen',
       key: 'tenQuyen',
-      render: (value, record) => <Tag color={record.idQuyen === 4 ? 'red' : 'blue'}>{value}</Tag>,
+      render: (value, record) => <Tag color={record.idQuyen === ADMIN_ROLE_ID ? 'red' : 'blue'}>{value}</Tag>,
     },
     {
-      title: 'Trạng thái',
+      title: 'Phan xuong',
+      dataIndex: 'tenPhanXuong',
+      key: 'tenPhanXuong',
+      render: (_, record) => {
+        if (record.tenPhanXuongs?.length) return record.tenPhanXuongs.join(', ')
+        if (record.phanXuongId) return `Phan xuong ${record.phanXuongId}`
+        return <Tag>Toan bo</Tag>
+      },
+    },
+    {
+      title: 'Trang thai',
       dataIndex: 'isLock',
       key: 'isLock',
-      render: (value) => (value === 1 ? <Tag color="warning">Đã khóa</Tag> : <Tag color="success">Hoạt động</Tag>),
+      render: (value) => (value === 1 ? <Tag color="warning">Da khoa</Tag> : <Tag color="success">Hoat dong</Tag>),
     },
     {
-      title: 'Thao tác',
+      title: 'Thao tac',
       key: 'actions',
       render: (_, record) => (
         <Space>
           <Button size="small" onClick={() => handleOpenEdit(record)}>
-            Sửa
+            Sua
           </Button>
-          <Popconfirm title="Xóa tài khoản này?" okText="Xóa" cancelText="Hủy" onConfirm={() => handleDelete(record.idNguoiDung)}>
+          <Popconfirm title="Xoa tai khoan nay?" okText="Xoa" cancelText="Huy" onConfirm={() => handleDelete(record.idNguoiDung)}>
             <Button danger size="small">
-              Xóa
+              Xoa
             </Button>
           </Popconfirm>
         </Space>
@@ -167,15 +212,15 @@ const ManageUser = () => {
     },
   ]
 
-  if (current?.idQuyen !== 4) {
-    return <div className="p-4 text-red-600 font-medium">Bạn không có quyền truy cập trang quản trị.</div>
+  if (current?.idQuyen !== ADMIN_ROLE_ID) {
+    return <div className="p-4 text-red-600 font-medium">Ban khong co quyen truy cap trang quan tri.</div>
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <Input.Search
-          placeholder="Tìm tài khoản..."
+          placeholder="Tim tai khoan..."
           allowClear
           onSearch={(value) => {
             setPage(1)
@@ -184,7 +229,7 @@ const ManageUser = () => {
           className="max-w-[320px]"
         />
         <Button type="primary" onClick={() => setOpenCreate(true)}>
-          Tạo tài khoản
+          Tao tai khoan
         </Button>
       </div>
 
@@ -197,7 +242,7 @@ const ManageUser = () => {
       />
 
       <Modal
-        title="Tạo tài khoản"
+        title="Tao tai khoan"
         open={openCreate}
         onCancel={() => {
           setOpenCreate(false)
@@ -207,23 +252,51 @@ const ManageUser = () => {
         confirmLoading={submitting}
       >
         <Form layout="vertical" form={formCreate} initialValues={{ isLock: 0 }}>
-          <Form.Item name="tenDangNhap" label="Tên đăng nhập" rules={[{ required: true }]}>
+          <Form.Item name="tenDangNhap" label="Ten dang nhap" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="matKhau" label="Mật khẩu" rules={[{ required: true }]}>
+          <Form.Item name="matKhau" label="Mat khau" rules={[{ required: true }]}>
             <Input.Password />
           </Form.Item>
-          <Form.Item name="idquyen" label="Quyền đăng nhập" rules={[{ required: true }]}>
+          <Form.Item name="idquyen" label="Quyen dang nhap" rules={[{ required: true }]}>
             <Select options={roleOptions} />
           </Form.Item>
-          <Form.Item name="isLock" label="Trạng thái">
-            <Select options={[{ label: 'Hoạt động', value: 0 }, { label: 'Khóa', value: 1 }]} />
+          <Form.Item shouldUpdate={(prev, cur) => prev.idquyen !== cur.idquyen} noStyle>
+            {({ getFieldValue }) => {
+              const selectedRole = getFieldValue('idquyen')
+              const isAdminRole = selectedRole === ADMIN_ROLE_ID
+
+              return (
+                <Form.Item
+                  name="phanXuongIds"
+                  label="Phan xuong"
+                  rules={[
+                    {
+                      validator: (_, value) => {
+                        if (isAdminRole || (Array.isArray(value) && value.length > 0)) return Promise.resolve()
+                        return Promise.reject(new Error('Vui long chon it nhat 1 phan xuong cho user nay'))
+                      },
+                    },
+                  ]}
+                >
+                  <Select
+                    allowClear={isAdminRole}
+                    mode="multiple"
+                    placeholder={isAdminRole ? 'De trong neu la admin toan bo' : 'Chon 1 hoac nhieu phan xuong'}
+                    options={phanXuongOptions}
+                  />
+                </Form.Item>
+              )
+            }}
+          </Form.Item>
+          <Form.Item name="isLock" label="Trang thai">
+            <Select options={[{ label: 'Hoat dong', value: 0 }, { label: 'Khoa', value: 1 }]} />
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title="Cập nhật tài khoản"
+        title="Cap nhat tai khoan"
         open={!!editingUser}
         onCancel={() => {
           setEditingUser(null)
@@ -233,17 +306,45 @@ const ManageUser = () => {
         confirmLoading={submitting}
       >
         <Form layout="vertical" form={formEdit}>
-          <Form.Item name="tenDangNhap" label="Tên đăng nhập" rules={[{ required: true }]}>
+          <Form.Item name="tenDangNhap" label="Ten dang nhap" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="matKhau" label="Mật khẩu mới (để trống nếu không đổi)">
+          <Form.Item name="matKhau" label="Mat khau moi (de trong neu khong doi)">
             <Input.Password />
           </Form.Item>
-          <Form.Item name="idquyen" label="Quyền" rules={[{ required: true }]}>
+          <Form.Item name="idquyen" label="Quyen" rules={[{ required: true }]}>
             <Select options={roleOptions} />
           </Form.Item>
-          <Form.Item name="isLock" label="Trạng thái">
-            <Select options={[{ label: 'Hoạt động', value: 0 }, { label: 'Khóa', value: 1 }]} />
+          <Form.Item shouldUpdate={(prev, cur) => prev.idquyen !== cur.idquyen} noStyle>
+            {({ getFieldValue }) => {
+              const selectedRole = getFieldValue('idquyen')
+              const isAdminRole = selectedRole === ADMIN_ROLE_ID
+
+              return (
+                <Form.Item
+                  name="phanXuongIds"
+                  label="Phan xuong"
+                  rules={[
+                    {
+                      validator: (_, value) => {
+                        if (isAdminRole || (Array.isArray(value) && value.length > 0)) return Promise.resolve()
+                        return Promise.reject(new Error('Vui long chon it nhat 1 phan xuong cho user nay'))
+                      },
+                    },
+                  ]}
+                >
+                  <Select
+                    allowClear={isAdminRole}
+                    mode="multiple"
+                    placeholder={isAdminRole ? 'De trong neu la admin toan bo' : 'Chon 1 hoac nhieu phan xuong'}
+                    options={phanXuongOptions}
+                  />
+                </Form.Item>
+              )
+            }}
+          </Form.Item>
+          <Form.Item name="isLock" label="Trang thai">
+            <Select options={[{ label: 'Hoat dong', value: 0 }, { label: 'Khoa', value: 1 }]} />
           </Form.Item>
         </Form>
       </Modal>

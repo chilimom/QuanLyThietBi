@@ -5,13 +5,23 @@ using System.Text;
 
 public static class JwtHelper
 {
-    public static string GenerateToken(string manv, int role, string secretKey, string issuer, int minutes = 480)
+    public const string PhanXuongClaimType = "phan_xuong_id";
+
+    public static string GenerateToken(string manv, int role, IEnumerable<int>? phanXuongIds, string secretKey, string issuer, int minutes = 480)
     {
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, manv),
             new Claim(ClaimTypes.Role, role.ToString())
         };
+
+        if (phanXuongIds != null)
+        {
+            foreach (var phanXuongId in phanXuongIds.Distinct())
+            {
+                claims.Add(new Claim(PhanXuongClaimType, phanXuongId.ToString()));
+            }
+        }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

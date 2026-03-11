@@ -6,5 +6,7 @@ namespace Server.Models
         public string? MatKhau { get; set; }
         public int? Idquyen { get; set; }
         public int? IsLock { get; set; }
+        public int? PhanXuongId { get; set; }
+        public List<int>? PhanXuongIds { get; set; }
     }
 }
