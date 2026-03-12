@@ -45,6 +45,7 @@ const Login = () => {
           const email = rs?.data?.email
           const soDienThoai = rs?.data?.soDienThoai
           const diaChi = rs?.data?.diaChi
+          const anhDaiDien = rs?.data?.anhDaiDien
           const role = rs?.data?.role
 
           if (remember) {
@@ -64,6 +65,7 @@ const Login = () => {
                 email,
                 soDienThoai,
                 diaChi,
+                anhDaiDien,
                 idQuyen: role,
               },
             })

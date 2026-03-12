@@ -134,6 +134,7 @@ public class NguoiDungController : ControllerBase
                 Email = a.Email,
                 SoDienThoai = a.SoDienThoai,
                 DiaChi = a.DiaChi,
+                AnhDaiDien = a.AnhDaiDien,
                 IDQuyen = a.Idquyen ?? 0,
                 TenQuyen = roleMap.TryGetValue(a.Idquyen ?? 0, out var tenQuyen) ? tenQuyen : "",
                 IsLock = a.IsLock ?? 0,

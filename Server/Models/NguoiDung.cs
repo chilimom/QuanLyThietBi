@@ -11,6 +11,7 @@ public partial class NguoiDung
     public string? Email { get; set; }
     public string? SoDienThoai { get; set; }
     public string? DiaChi { get; set; }
+    public string? AnhDaiDien { get; set; }
     public int? NhanVienId { get; set; }
     public int? Idquyen { get; set; }
     public int? IsLock { get; set; }

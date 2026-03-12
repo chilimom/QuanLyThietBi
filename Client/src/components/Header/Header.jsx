@@ -60,7 +60,7 @@ const Header = ({ onToggleSidebar }) => {
             className="relative items-center justify-center gap-2 px-3 cursor-pointer flex  w-auto h-[50px] rounded-sm shadow-amber-50 "
           >
             <img
-              src={avatar}
+              src={current?.anhDaiDien || avatar}
               alt="avatar"
               className="w-[30px] h-[30px] rounded-full object-cover"
             />

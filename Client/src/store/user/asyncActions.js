@@ -16,6 +16,7 @@ export const getCurent = createAsyncThunk('user/current', async (data, { rejectW
       email: user.email ?? user.Email ?? '',
       soDienThoai: user.soDienThoai ?? user.SoDienThoai ?? '',
       diaChi: user.diaChi ?? user.DiaChi ?? '',
+      anhDaiDien: user.anhDaiDien ?? user.AnhDaiDien ?? '',
       idQuyen: user.idQuyen ?? user.iDQuyen ?? user.IDQuyen ?? 0,
       tenQuyen: user.tenQuyen ?? user.TenQuyen ?? '',
       isLock: user.isLock ?? user.IsLock ?? 0,

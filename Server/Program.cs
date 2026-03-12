@@ -187,6 +187,11 @@ BEGIN
     ALTER TABLE dbo.NguoiDung ADD DiaChi NVARCHAR(250) NULL;
 END;
 
+IF COL_LENGTH('dbo.NguoiDung', 'AnhDaiDien') IS NULL
+BEGIN
+    ALTER TABLE dbo.NguoiDung ADD AnhDaiDien NVARCHAR(MAX) NULL;
+END;
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.foreign_keys

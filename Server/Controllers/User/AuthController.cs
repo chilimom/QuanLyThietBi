@@ -88,6 +88,7 @@ public class AuthController : ControllerBase
                 Email = account.Email,
                 SoDienThoai = account.SoDienThoai,
                 DiaChi = account.DiaChi,
+                AnhDaiDien = account.AnhDaiDien,
                 PhanXuongId = assignedPhanXuongs.FirstOrDefault()?.PhanXuongId,
                 TenPhanXuong = assignedPhanXuongs.FirstOrDefault()?.TenPhanXuong,
                 PhanXuongIds = assignedPhanXuongs.Select(x => x.PhanXuongId).ToList(),
@@ -160,6 +161,7 @@ public class AuthController : ControllerBase
             Email = account.Email,
             SoDienThoai = account.SoDienThoai,
             DiaChi = account.DiaChi,
+            AnhDaiDien = account.AnhDaiDien,
             IDQuyen = account.Idquyen ?? 0,
             TenQuyen = quyen?.TenQuyen ?? string.Empty,
             IsLock = account.IsLock ?? 0,
@@ -211,6 +213,7 @@ public class AuthController : ControllerBase
         var email = request.Email?.Trim();
         var soDienThoai = request.SoDienThoai?.Trim();
         var diaChi = request.DiaChi?.Trim();
+        var anhDaiDien = request.AnhDaiDien?.Trim();
 
         if (!string.IsNullOrWhiteSpace(email))
         {
@@ -250,6 +253,7 @@ public class AuthController : ControllerBase
         account.Email = email;
         account.SoDienThoai = soDienThoai;
         account.DiaChi = diaChi;
+        account.AnhDaiDien = string.IsNullOrWhiteSpace(anhDaiDien) ? null : anhDaiDien;
 
         _context.NguoiDungs.Update(account);
         await _context.SaveChangesAsync();
@@ -265,7 +269,8 @@ public class AuthController : ControllerBase
                 account.HoTen,
                 account.Email,
                 account.SoDienThoai,
-                account.DiaChi
+                account.DiaChi,
+                account.AnhDaiDien
             }
         });
     }
