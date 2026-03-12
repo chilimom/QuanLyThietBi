@@ -12,6 +12,7 @@ import {
   ManageThietBi,
   ManageThietBiKhuVuc,
   ManageUser,
+  Personal,
   VatTuBaoTri,
 } from './Pages/Public'
 import { useSelector } from 'react-redux'
@@ -33,6 +34,7 @@ function App() {
           <Route path={path.MANAGE_VT} element={<VatTuBaoTri />} />
           <Route path={path.MANAGE_TB_KHU_VUC} element={<ManageThietBiKhuVuc />} />
           <Route path={path.MANAGE_USER} element={<ManageUser />} />
+          <Route path={path.PERSONAL} element={<Personal />} />
           <Route path={path.ADMIN_LOGIN_ROLE} element={<AdminLoginRole />} />
           <Route path={path.ADMIN_POSITION} element={<AdminPosition />} />
           <Route path={path.ADMIN_WORKSHOP} element={<AdminWorkshop />} />

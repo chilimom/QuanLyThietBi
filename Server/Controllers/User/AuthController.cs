@@ -84,7 +84,10 @@ public class AuthController : ControllerBase
                 AccessToken = accessToken,
                 MaNv = account.TenDangNhap ?? "",
                 Role = role,
-                HoTen = account.TenDangNhap,
+                HoTen = string.IsNullOrWhiteSpace(account.HoTen) ? account.TenDangNhap : account.HoTen,
+                Email = account.Email,
+                SoDienThoai = account.SoDienThoai,
+                DiaChi = account.DiaChi,
                 PhanXuongId = assignedPhanXuongs.FirstOrDefault()?.PhanXuongId,
                 TenPhanXuong = assignedPhanXuongs.FirstOrDefault()?.TenPhanXuong,
                 PhanXuongIds = assignedPhanXuongs.Select(x => x.PhanXuongId).ToList(),
@@ -153,7 +156,10 @@ public class AuthController : ControllerBase
             IDNguoiDung = account.IdnguoiDung,
             TenDangNhap = account.TenDangNhap ?? string.Empty,
             MatKhau = account.MatKhau ?? string.Empty,
-            HoTen = account.TenDangNhap ?? string.Empty,
+            HoTen = string.IsNullOrWhiteSpace(account.HoTen) ? account.TenDangNhap : account.HoTen,
+            Email = account.Email,
+            SoDienThoai = account.SoDienThoai,
+            DiaChi = account.DiaChi,
             IDQuyen = account.Idquyen ?? 0,
             TenQuyen = quyen?.TenQuyen ?? string.Empty,
             IsLock = account.IsLock ?? 0,
@@ -172,6 +178,95 @@ public class AuthController : ControllerBase
             Status = true,
             Message = "Lay thong tin nguoi dung thanh cong",
             Data = user
+        });
+    }
+
+    [Authorize]
+    [HttpPut("personal")]
+    public async Task<IActionResult> UpdatePersonal([FromBody] CapNhatThongTinCaNhanRequest request)
+    {
+        var username = User.FindFirst(ClaimTypes.Name)?.Value;
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return Unauthorized(new ApiResponse<object>
+            {
+                Status = false,
+                Message = "Token khong hop le!",
+                Data = null
+            });
+        }
+
+        var account = await _context.NguoiDungs.FirstOrDefaultAsync(x => x.TenDangNhap == username);
+        if (account == null)
+        {
+            return NotFound(new ApiResponse<object>
+            {
+                Status = false,
+                Message = "Khong tim thay nguoi dung!",
+                Data = null
+            });
+        }
+
+        var hoTen = request.HoTen?.Trim();
+        var email = request.Email?.Trim();
+        var soDienThoai = request.SoDienThoai?.Trim();
+        var diaChi = request.DiaChi?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var duplicatedEmail = await _context.NguoiDungs.AnyAsync(x =>
+                x.IdnguoiDung != account.IdnguoiDung &&
+                x.Email != null &&
+                x.Email.ToLower() == email.ToLower());
+
+            if (duplicatedEmail)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Status = false,
+                    Message = "Email da duoc su dung boi tai khoan khac.",
+                    Data = null
+                });
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.MatKhauMoi))
+        {
+            var currentPasswordHash = Encryptor.MD5Hash(request.MatKhauHienTai ?? string.Empty);
+            if (!string.Equals(account.MatKhau, currentPasswordHash, StringComparison.OrdinalIgnoreCase))
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Status = false,
+                    Message = "Mat khau hien tai khong dung.",
+                    Data = null
+                });
+            }
+
+            account.MatKhau = Encryptor.MD5Hash(request.MatKhauMoi.Trim());
+        }
+
+        account.HoTen = hoTen;
+        account.Email = email;
+        account.SoDienThoai = soDienThoai;
+        account.DiaChi = diaChi;
+
+        _context.NguoiDungs.Update(account);
+        await _context.SaveChangesAsync();
+
+        return Ok(new ApiResponse<object>
+        {
+            Status = true,
+            Message = "Cap nhat thong tin ca nhan thanh cong.",
+            Data = new
+            {
+                account.IdnguoiDung,
+                account.TenDangNhap,
+                account.HoTen,
+                account.Email,
+                account.SoDienThoai,
+                account.DiaChi
+            }
         });
     }
 }

@@ -80,8 +80,9 @@ const Header = ({ onToggleSidebar }) => {
 
                 <div className="relative z-10">
                   <Link
-                    // to={`/${path.MEMBER}/${path.PERSONAL}`}
+                    to={`/${path.LAYOUT}/${path.PERSONAL}`}
                     className="block px-4 py-2 text-gray-800 hover:bg-sky-100 rounded-t-md"
+                    onClick={() => setIsShowOption(false)}
                   >
                     Personal
                   </Link>

@@ -167,6 +167,26 @@ BEGIN
     ALTER TABLE dbo.NguoiDung ADD PhanXuongId INT NULL;
 END;
 
+IF COL_LENGTH('dbo.NguoiDung', 'HoTen') IS NULL
+BEGIN
+    ALTER TABLE dbo.NguoiDung ADD HoTen NVARCHAR(100) NULL;
+END;
+
+IF COL_LENGTH('dbo.NguoiDung', 'Email') IS NULL
+BEGIN
+    ALTER TABLE dbo.NguoiDung ADD Email NVARCHAR(150) NULL;
+END;
+
+IF COL_LENGTH('dbo.NguoiDung', 'SoDienThoai') IS NULL
+BEGIN
+    ALTER TABLE dbo.NguoiDung ADD SoDienThoai NVARCHAR(20) NULL;
+END;
+
+IF COL_LENGTH('dbo.NguoiDung', 'DiaChi') IS NULL
+BEGIN
+    ALTER TABLE dbo.NguoiDung ADD DiaChi NVARCHAR(250) NULL;
+END;
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.foreign_keys

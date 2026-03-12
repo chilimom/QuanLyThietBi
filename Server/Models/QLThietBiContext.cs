@@ -118,6 +118,10 @@ namespace Server.Models
 
                 entity.Property(e => e.IdnguoiDung).HasColumnName("IDNguoiDung");
                 entity.Property(e => e.Idquyen).HasColumnName("IDQuyen");
+                entity.Property(e => e.HoTen).HasMaxLength(100);
+                entity.Property(e => e.Email).HasMaxLength(150);
+                entity.Property(e => e.SoDienThoai).HasMaxLength(20);
+                entity.Property(e => e.DiaChi).HasMaxLength(250);
                 entity.Property(e => e.MatKhau).HasMaxLength(50);
                 entity.Property(e => e.NhanVienId).HasColumnName("NhanVienID");
                 entity.Property(e => e.PhanXuongId).HasColumnName("PhanXuongId");

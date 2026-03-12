@@ -42,6 +42,9 @@ const Login = () => {
           const token = rs?.data?.accessToken
           const username = rs?.data?.maNv
           const displayName = rs?.data?.hoTen
+          const email = rs?.data?.email
+          const soDienThoai = rs?.data?.soDienThoai
+          const diaChi = rs?.data?.diaChi
           const role = rs?.data?.role
 
           if (remember) {
@@ -54,7 +57,15 @@ const Login = () => {
             login({
               isLoggedIn: true,
               token,
-              userData: { maNv: username, hoTen: displayName, idQuyen: role },
+              userData: {
+                maNv: username,
+                tenDangNhap: username,
+                hoTen: displayName,
+                email,
+                soDienThoai,
+                diaChi,
+                idQuyen: role,
+              },
             })
           )
           localStorage.setItem('token', token || '')

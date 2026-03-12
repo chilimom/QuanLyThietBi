@@ -6,6 +6,9 @@ namespace Server.Models
         public string MaNv { get; set; } = "";
         public int? Role { get; set; }
         public string? HoTen { get; set; }
+        public string? Email { get; set; }
+        public string? SoDienThoai { get; set; }
+        public string? DiaChi { get; set; }
         public int? PhanXuongId { get; set; }
         public string? TenPhanXuong { get; set; }
         public List<int> PhanXuongIds { get; set; } = new();

@@ -22,3 +22,10 @@ export const apigetDetailUser = () =>
     url: '/auth/detail',
     method: 'get',
   })
+
+export const apiUpdatePersonal = (data) =>
+  axios({
+    url: '/auth/personal',
+    method: 'put',
+    data,
+  })
