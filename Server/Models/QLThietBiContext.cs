@@ -28,6 +28,7 @@ namespace Server.Models
         public virtual DbSet<ToLamViec> ToLamViecs { get; set; }
         public DbSet<XuatVatTu> XuatVatTus { get; set; }
         public virtual DbSet<ThietBiKhuVuc> ThietBiKhuVucs { get; set; }
+        public virtual DbSet<NhomThietBiKhuVuc> NhomThietBiKhuVucs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -93,6 +94,18 @@ namespace Server.Models
                       .WithMany(p => p.ThietBiKhuVucs)
                       .HasForeignKey(d => d.PhanXuongId)
                       .HasConstraintName("FK_ThietBiKhuVuc_PhanXuong");
+            });
+
+            modelBuilder.Entity<NhomThietBiKhuVuc>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK_NhomThietBiKhuVuc");
+                entity.ToTable("NhomThietBiKhuVuc");
+
+                entity.Property(e => e.MaNhom).HasMaxLength(50);
+                entity.Property(e => e.TenNhom).HasMaxLength(100);
+
+                entity.HasIndex(e => e.MaNhom).IsUnique();
+                entity.HasIndex(e => e.TenNhom).IsUnique();
             });
 
             // =======================

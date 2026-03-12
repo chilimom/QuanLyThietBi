@@ -115,6 +115,52 @@ END;";
 
     db.Database.ExecuteSqlRaw(ensureThietBiKhuVucSql);
 
+    var ensureNhomThietBiKhuVucSql = @"
+IF OBJECT_ID('dbo.NhomThietBiKhuVuc', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.NhomThietBiKhuVuc
+    (
+        Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        MaNhom NVARCHAR(50) NOT NULL,
+        TenNhom NVARCHAR(100) NOT NULL
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'UX_NhomThietBiKhuVuc_MaNhom'
+      AND object_id = OBJECT_ID('dbo.NhomThietBiKhuVuc')
+)
+BEGIN
+    CREATE UNIQUE INDEX UX_NhomThietBiKhuVuc_MaNhom ON dbo.NhomThietBiKhuVuc(MaNhom);
+END;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'UX_NhomThietBiKhuVuc_TenNhom'
+      AND object_id = OBJECT_ID('dbo.NhomThietBiKhuVuc')
+)
+BEGIN
+    CREATE UNIQUE INDEX UX_NhomThietBiKhuVuc_TenNhom ON dbo.NhomThietBiKhuVuc(TenNhom);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.NhomThietBiKhuVuc WHERE MaNhom = N'ThietBiMang')
+BEGIN
+    INSERT INTO dbo.NhomThietBiKhuVuc (MaNhom, TenNhom) VALUES (N'ThietBiMang', N'Thiet bi mang');
+END;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.NhomThietBiKhuVuc WHERE MaNhom = N'MayTinhVanHanh')
+BEGIN
+    INSERT INTO dbo.NhomThietBiKhuVuc (MaNhom, TenNhom) VALUES (N'MayTinhVanHanh', N'May tinh van hanh');
+END;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.NhomThietBiKhuVuc WHERE MaNhom = N'ThietBiCCTV')
+BEGIN
+    INSERT INTO dbo.NhomThietBiKhuVuc (MaNhom, TenNhom) VALUES (N'ThietBiCCTV', N'Thiet bi CCTV');
+END;";
+
+    db.Database.ExecuteSqlRaw(ensureNhomThietBiKhuVucSql);
+
     var ensureNguoiDungPhanXuongSql = @"
 IF COL_LENGTH('dbo.NguoiDung', 'PhanXuongId') IS NULL
 BEGIN

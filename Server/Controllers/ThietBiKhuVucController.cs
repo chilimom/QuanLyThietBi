@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Helpers;
 using Server.Models;
+using System.Globalization;
+using System.Text;
 
 namespace Server.Controllers
 {
@@ -10,13 +12,6 @@ namespace Server.Controllers
     [Route("api/thietbikhuvuc")]
     public class ThietBiKhuVucController : ControllerBase
     {
-        private static readonly HashSet<string> AllowedNhomThietBi = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "ThietBiMang",
-            "MayTinhVanHanh",
-            "ThietBiCCTV"
-        };
-
         private readonly QLThietBiContext _context;
 
         public ThietBiKhuVucController(QLThietBiContext context)
@@ -25,15 +20,185 @@ namespace Server.Controllers
         }
 
         [Authorize]
-        [HttpPost("create")]
-        public async Task<IActionResult> Create([FromBody] ThietBiKhuVucValidation request)
+        [HttpGet("groups")]
+        public async Task<IActionResult> GetGroups()
         {
-            if (!IsValidRequest(request, out var message))
+            var usageMap = await _context.ThietBiKhuVucs
+                .GroupBy(x => x.NhomThietBi)
+                .Select(g => new { MaNhom = g.Key, SoThietBi = g.Count() })
+                .ToDictionaryAsync(x => x.MaNhom, x => x.SoThietBi);
+
+            var groups = await _context.NhomThietBiKhuVucs
+                .AsNoTracking()
+                .OrderBy(x => x.TenNhom)
+                .Select(x => new NhomThietBiKhuVucValidation
+                {
+                    Id = x.Id,
+                    MaNhom = x.MaNhom,
+                    TenNhom = x.TenNhom
+                })
+                .ToListAsync();
+
+            foreach (var group in groups)
+            {
+                group.SoThietBi = usageMap.TryGetValue(group.MaNhom ?? string.Empty, out var count) ? count : 0;
+            }
+
+            return Ok(new ApiResponse<List<NhomThietBiKhuVucValidation>>
+            {
+                Status = true,
+                Message = "Lay danh sach nhom thiet bi thanh cong.",
+                Data = groups
+            });
+        }
+
+        [Authorize(Roles = "4")]
+        [HttpPost("groups")]
+        public async Task<IActionResult> CreateGroup([FromBody] NhomThietBiKhuVucValidation request)
+        {
+            if (!TryNormalizeGroupInput(request, out var maNhom, out var tenNhom, out var message))
+            {
+                return Ok(new ApiResponse<object> { Status = false, Message = message, Data = null });
+            }
+
+            var existed = await _context.NhomThietBiKhuVucs.AnyAsync(x =>
+                x.MaNhom.ToLower() == maNhom.ToLower() ||
+                x.TenNhom.ToLower() == tenNhom.ToLower());
+
+            if (existed)
             {
                 return Ok(new ApiResponse<object>
                 {
                     Status = false,
-                    Message = message,
+                    Message = "Nhom thiet bi da ton tai.",
+                    Data = null
+                });
+            }
+
+            var entity = new NhomThietBiKhuVuc
+            {
+                MaNhom = maNhom,
+                TenNhom = tenNhom
+            };
+
+            _context.NhomThietBiKhuVucs.Add(entity);
+            await _context.SaveChangesAsync();
+
+            return Ok(new ApiResponse<NhomThietBiKhuVucValidation>
+            {
+                Status = true,
+                Message = "Them nhom thiet bi thanh cong.",
+                Data = new NhomThietBiKhuVucValidation
+                {
+                    Id = entity.Id,
+                    MaNhom = entity.MaNhom,
+                    TenNhom = entity.TenNhom,
+                    SoThietBi = 0
+                }
+            });
+        }
+
+        [Authorize(Roles = "4")]
+        [HttpPut("groups/{id}")]
+        public async Task<IActionResult> UpdateGroup(int id, [FromBody] NhomThietBiKhuVucValidation request)
+        {
+            var entity = await _context.NhomThietBiKhuVucs.FirstOrDefaultAsync(x => x.Id == id);
+            if (entity == null)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Status = false,
+                    Message = "Khong tim thay nhom thiet bi.",
+                    Data = null
+                });
+            }
+
+            if (!TryNormalizeGroupInput(request, out _, out var tenNhom, out var message))
+            {
+                return Ok(new ApiResponse<object> { Status = false, Message = message, Data = null });
+            }
+
+            var duplicated = await _context.NhomThietBiKhuVucs.AnyAsync(x =>
+                x.Id != id &&
+                x.TenNhom.ToLower() == tenNhom.ToLower());
+
+            if (duplicated)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Status = false,
+                    Message = "Ten nhom thiet bi da ton tai.",
+                    Data = null
+                });
+            }
+
+            entity.TenNhom = tenNhom;
+            await _context.SaveChangesAsync();
+
+            var soThietBi = await _context.ThietBiKhuVucs.CountAsync(x => x.NhomThietBi == entity.MaNhom);
+
+            return Ok(new ApiResponse<NhomThietBiKhuVucValidation>
+            {
+                Status = true,
+                Message = "Cap nhat nhom thiet bi thanh cong.",
+                Data = new NhomThietBiKhuVucValidation
+                {
+                    Id = entity.Id,
+                    MaNhom = entity.MaNhom,
+                    TenNhom = entity.TenNhom,
+                    SoThietBi = soThietBi
+                }
+            });
+        }
+
+        [Authorize(Roles = "4")]
+        [HttpDelete("groups/{id}")]
+        public async Task<IActionResult> DeleteGroup(int id)
+        {
+            var entity = await _context.NhomThietBiKhuVucs.FirstOrDefaultAsync(x => x.Id == id);
+            if (entity == null)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Status = false,
+                    Message = "Khong tim thay nhom thiet bi.",
+                    Data = null
+                });
+            }
+
+            var usageCount = await _context.ThietBiKhuVucs.CountAsync(x => x.NhomThietBi == entity.MaNhom);
+            if (usageCount > 0)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Status = false,
+                    Message = "Khong the xoa nhom dang duoc su dung.",
+                    Data = null
+                });
+            }
+
+            _context.NhomThietBiKhuVucs.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            return Ok(new ApiResponse<object>
+            {
+                Status = true,
+                Message = "Xoa nhom thiet bi thanh cong.",
+                Data = null
+            });
+        }
+
+        [Authorize]
+        [HttpPost("create")]
+        public async Task<IActionResult> Create([FromBody] ThietBiKhuVucValidation request)
+        {
+            var validation = await ValidateRequestAsync(request);
+            if (!validation.IsValid)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Status = false,
+                    Message = validation.Message,
                     Data = null
                 });
             }
@@ -101,14 +266,29 @@ namespace Server.Controllers
             {
                 query = query.Where(x => scopedPhanXuongIds.Contains(x.PhanXuongId));
             }
-            else if (phanXuongId.HasValue)
+
+            if (phanXuongId.HasValue)
             {
                 query = query.Where(x => x.PhanXuongId == phanXuongId.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(nhomThietBi))
             {
-                var normalizedNhom = NormalizeNhom(nhomThietBi);
+                var normalizedNhom = await ResolveNhomThietBiCodeAsync(nhomThietBi);
+                if (string.IsNullOrWhiteSpace(normalizedNhom))
+                {
+                    return Ok(new ApiResponsePagination<List<ThietBiKhuVucValidation>>
+                    {
+                        Status = true,
+                        Message = "Lay danh sach thiet bi khu vuc thanh cong.",
+                        Data = new List<ThietBiKhuVucValidation>(),
+                        TotalItems = 0,
+                        Page = page,
+                        Limit = limit,
+                        TotalPages = 0
+                    });
+                }
+
                 query = query.Where(x => x.NhomThietBi == normalizedNhom);
             }
 
@@ -165,12 +345,13 @@ namespace Server.Controllers
         [HttpPut("update/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ThietBiKhuVucValidation request)
         {
-            if (!IsValidRequest(request, out var message))
+            var validation = await ValidateRequestAsync(request);
+            if (!validation.IsValid)
             {
                 return Ok(new ApiResponse<object>
                 {
                     Status = false,
-                    Message = message,
+                    Message = validation.Message,
                     Data = null
                 });
             }
@@ -275,86 +456,175 @@ namespace Server.Controllers
             {
                 query = query.Where(x => scopedPhanXuongIds.Contains(x.PhanXuongId));
             }
-            else if (phanXuongId.HasValue)
+
+            if (phanXuongId.HasValue)
             {
                 query = query.Where(x => x.PhanXuongId == phanXuongId.Value);
             }
 
-            var raw = await query
-                .GroupBy(x => new { x.PhanXuongId, x.PhanXuong.TenPhanXuong })
+            var nhomLabelMap = await _context.NhomThietBiKhuVucs
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.MaNhom, x => x.TenNhom);
+
+            var rows = await query
+                .GroupBy(x => new { x.PhanXuongId, x.PhanXuong.TenPhanXuong, x.NhomThietBi })
                 .Select(g => new
                 {
                     g.Key.PhanXuongId,
                     g.Key.TenPhanXuong,
+                    g.Key.NhomThietBi,
                     TongBanGhi = g.Count(),
-                    TongSoLuong = g.Sum(x => x.SoLuong),
-                    ThietBiMang = g.Where(x => x.NhomThietBi == "ThietBiMang").Sum(x => x.SoLuong),
-                    MayTinhVanHanh = g.Where(x => x.NhomThietBi == "MayTinhVanHanh").Sum(x => x.SoLuong),
-                    ThietBiCCTV = g.Where(x => x.NhomThietBi == "ThietBiCCTV").Sum(x => x.SoLuong)
+                    TongSoLuong = g.Sum(x => x.SoLuong)
+                })
+                .ToListAsync();
+
+            var data = rows
+                .GroupBy(x => new { x.PhanXuongId, x.TenPhanXuong })
+                .Select(g => new
+                {
+                    g.Key.PhanXuongId,
+                    g.Key.TenPhanXuong,
+                    TongBanGhi = g.Sum(x => x.TongBanGhi),
+                    TongSoLuong = g.Sum(x => x.TongSoLuong),
+                    TongTheoNhom = g
+                        .OrderBy(x => nhomLabelMap.TryGetValue(x.NhomThietBi, out var tenNhom) ? tenNhom : x.NhomThietBi)
+                        .Select(x => new
+                        {
+                            MaNhom = x.NhomThietBi,
+                            TenNhom = nhomLabelMap.TryGetValue(x.NhomThietBi, out var tenNhom) ? tenNhom : x.NhomThietBi,
+                            TongBanGhi = x.TongBanGhi,
+                            TongSoLuong = x.TongSoLuong
+                        })
+                        .ToList()
                 })
                 .OrderBy(x => x.PhanXuongId)
-                .ToListAsync();
+                .ToList();
 
             return Ok(new ApiResponse<object>
             {
                 Status = true,
                 Message = "Thong ke thiet bi theo khu vuc.",
-                Data = raw
+                Data = data
             });
         }
 
-        private static bool IsValidRequest(ThietBiKhuVucValidation request, out string message)
+        private async Task<(bool IsValid, string Message)> ValidateRequestAsync(ThietBiKhuVucValidation request)
         {
             if (request.PhanXuongId <= 0)
             {
-                message = "Phan xuong khong hop le.";
-                return false;
+                return (false, "Phan xuong khong hop le.");
             }
 
             if (string.IsNullOrWhiteSpace(request.NhomThietBi))
             {
-                message = "Nhom thiet bi la bat buoc.";
-                return false;
+                return (false, "Nhom thiet bi la bat buoc.");
             }
 
-            var normalizedNhom = NormalizeNhom(request.NhomThietBi);
-            if (!AllowedNhomThietBi.Contains(normalizedNhom))
+            var normalizedNhom = await ResolveNhomThietBiCodeAsync(request.NhomThietBi);
+            if (string.IsNullOrWhiteSpace(normalizedNhom))
             {
-                message = "Nhom thiet bi khong hop le.";
-                return false;
+                return (false, "Nhom thiet bi khong hop le.");
             }
 
             request.NhomThietBi = normalizedNhom;
 
             if (string.IsNullOrWhiteSpace(request.TenVatTu))
             {
-                message = "Ten vat tu la bat buoc.";
-                return false;
+                return (false, "Ten vat tu la bat buoc.");
             }
 
             if (string.IsNullOrWhiteSpace(request.ViTri))
             {
-                message = "Vi tri la bat buoc.";
-                return false;
+                return (false, "Vi tri la bat buoc.");
             }
 
             if (request.SoLuong < 0)
             {
-                message = "So luong khong hop le.";
+                return (false, "So luong khong hop le.");
+            }
+
+            return (true, string.Empty);
+        }
+
+        private async Task<string?> ResolveNhomThietBiCodeAsync(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var normalizedValue = value.Trim();
+
+            var group = await _context.NhomThietBiKhuVucs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.MaNhom.ToLower() == normalizedValue.ToLower() ||
+                    x.TenNhom.ToLower() == normalizedValue.ToLower());
+
+            return group?.MaNhom;
+        }
+
+        private static bool TryNormalizeGroupInput(
+            NhomThietBiKhuVucValidation request,
+            out string maNhom,
+            out string tenNhom,
+            out string message)
+        {
+            tenNhom = request.TenNhom?.Trim() ?? string.Empty;
+            maNhom = string.IsNullOrWhiteSpace(request.MaNhom)
+                ? GenerateGroupCode(tenNhom)
+                : GenerateGroupCode(request.MaNhom);
+
+            if (string.IsNullOrWhiteSpace(tenNhom))
+            {
+                message = "Ten nhom thiet bi la bat buoc.";
                 return false;
             }
 
+            if (string.IsNullOrWhiteSpace(maNhom))
+            {
+                message = "Khong the tao ma nhom thiet bi hop le.";
+                return false;
+            }
+
+            request.TenNhom = tenNhom;
+            request.MaNhom = maNhom;
             message = string.Empty;
             return true;
         }
 
-        private static string NormalizeNhom(string value)
+        private static string GenerateGroupCode(string value)
         {
-            var normalized = value.Trim();
-            if (normalized.Equals("Thiet bi mang", StringComparison.OrdinalIgnoreCase)) return "ThietBiMang";
-            if (normalized.Equals("May tinh van hanh", StringComparison.OrdinalIgnoreCase)) return "MayTinhVanHanh";
-            if (normalized.Equals("Thiet bi CCTV", StringComparison.OrdinalIgnoreCase)) return "ThietBiCCTV";
-            return normalized;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            var normalized = value.Normalize(NormalizationForm.FormD);
+            var builder = new StringBuilder();
+            var capitalizeNext = true;
+
+            foreach (var ch in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
+                {
+                    continue;
+                }
+
+                if (char.IsLetterOrDigit(ch))
+                {
+                    builder.Append(capitalizeNext
+                        ? char.ToUpperInvariant(ch)
+                        : char.ToLowerInvariant(ch));
+                    capitalizeNext = false;
+                }
+                else
+                {
+                    capitalizeNext = true;
+                }
+            }
+
+            return builder.ToString();
         }
 
         private IReadOnlyCollection<int> GetScopedPhanXuongIds()

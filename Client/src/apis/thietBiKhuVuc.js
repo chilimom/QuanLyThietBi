@@ -1,5 +1,31 @@
 import axios from './axios'
 
+export const apiGetNhomThietBiKhuVuc = () =>
+  axios({
+    url: '/thietbikhuvuc/groups',
+    method: 'get',
+  })
+
+export const apiCreateNhomThietBiKhuVuc = (data) =>
+  axios({
+    url: '/thietbikhuvuc/groups',
+    method: 'post',
+    data,
+  })
+
+export const apiUpdateNhomThietBiKhuVuc = (id, data) =>
+  axios({
+    url: `/thietbikhuvuc/groups/${id}`,
+    method: 'put',
+    data,
+  })
+
+export const apiDeleteNhomThietBiKhuVuc = (id) =>
+  axios({
+    url: `/thietbikhuvuc/groups/${id}`,
+    method: 'delete',
+  })
+
 export const apiGetThietBiKhuVuc = ({
   phanXuongId,
   nhomThietBi,
