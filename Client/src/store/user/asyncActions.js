@@ -5,8 +5,23 @@ export const getCurent = createAsyncThunk('user/current', async (data, { rejectW
   try {
     const response = await apis.apigetDetailUser()
     if (!response.status) return rejectWithValue({ message: response?.message })
-    return response.data
+
+    const user = response.data || {}
+
+    return {
+      ...user,
+      idNguoiDung: user.idNguoiDung ?? user.iDNguoiDung ?? user.IDNguoiDung ?? null,
+      tenDangNhap: user.tenDangNhap ?? user.TenDangNhap ?? '',
+      hoTen: user.hoTen ?? user.HoTen ?? user.tenDangNhap ?? '',
+      idQuyen: user.idQuyen ?? user.iDQuyen ?? user.IDQuyen ?? 0,
+      tenQuyen: user.tenQuyen ?? user.TenQuyen ?? '',
+      isLock: user.isLock ?? user.IsLock ?? 0,
+      phanXuongId: user.phanXuongId ?? user.PhanXuongId ?? null,
+      tenPhanXuong: user.tenPhanXuong ?? user.TenPhanXuong ?? '',
+      phanXuongIds: user.phanXuongIds ?? user.PhanXuongIds ?? [],
+      tenPhanXuongs: user.tenPhanXuongs ?? user.TenPhanXuongs ?? [],
+    }
   } catch (err) {
-    return rejectWithValue({ message: 'Token hết hạn hoặc không hợp lệ!' })
+    return rejectWithValue({ message: 'Token het han hoac khong hop le!' })
   }
 })

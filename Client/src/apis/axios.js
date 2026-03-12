@@ -3,22 +3,24 @@ import axios from 'axios'
 
 const getPersistedToken = () => {
   try {
-    const persisted = localStorage.getItem('persist:QLTB/user')
     const directToken = localStorage.getItem('token')
+    if (directToken) return directToken
 
-    if (!persisted) return directToken || null
+    const persisted = localStorage.getItem('persist:QLTB/user')
+
+    if (!persisted) return null
 
     const parsed = JSON.parse(persisted)
     const rawToken = parsed?.token
-    if (!rawToken) return directToken || null
+    if (!rawToken) return null
 
     // redux-persist usually stores token as a JSON string (e.g. "\"ey...\"")
     try {
       const token = JSON.parse(rawToken)
-      return token || directToken || null
+      return token || null
     } catch {
       // fallback for legacy persisted formats
-      return String(rawToken).replace(/^"+|"+$/g, '') || directToken || null
+      return String(rawToken).replace(/^"+|"+$/g, '') || null
     }
   } catch {
     return localStorage.getItem('token')
