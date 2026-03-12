@@ -146,7 +146,7 @@ const Personal = () => {
           <Card size="small" title="Đổi mật khẩu" className="mb-4">
             <Row gutter={16}>
               <Col xs={24} md={8}>
-                <Form.Item label="ật khẩu hiện tại" name="matKhauHienTai">
+                <Form.Item label="Mật khẩu hiện tại" name="matKhauHienTai">
                   <Input.Password placeholder="Nhập mật khẩu hiện tại" />
                 </Form.Item>
               </Col>
