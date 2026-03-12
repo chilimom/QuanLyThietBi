@@ -439,7 +439,7 @@ const ManageThietBiKhuVuc = () => {
         <Space size="middle">
           <FaRegEdit className="text-blue-600 cursor-pointer" onClick={() => openEditModal(record)} />
           <Popconfirm
-            title="Xoa thiet bi nay?"
+            title="Xóa thiết bị này?"
             okText="Xoa"
             cancelText="Huy"
             onConfirm={() => handleDelete(record.id)}
@@ -453,41 +453,41 @@ const ManageThietBiKhuVuc = () => {
 
   const groupColumns = [
     {
-      title: 'Ten nhom',
+      title: 'Tên nhóm',
       dataIndex: 'tenNhom',
       key: 'tenNhom',
     },
     {
-      title: 'Ma nhom',
+      title: 'Mã nhóm',
       dataIndex: 'maNhom',
       key: 'maNhom',
       width: 180,
       render: (value) => <Tag>{value}</Tag>,
     },
     {
-      title: 'So thiet bi',
+      title: 'Số thiết bị',
       dataIndex: 'soThietBi',
       key: 'soThietBi',
       width: 120,
       align: 'right',
     },
     {
-      title: 'Thao tac',
+      title: 'Thao tác',
       key: 'action',
       width: 140,
       render: (_, record) => (
         <Space>
           <Button size="small" onClick={() => openEditGroup(record)}>
-            Sua
+            Sửa
           </Button>
           <Popconfirm
-            title="Xoa nhom thiet bi nay?"
+            title="Xóa nhóm thiết bị này?"
             okText="Xoa"
             cancelText="Huy"
             onConfirm={() => handleDeleteGroup(record.id)}
           >
             <Button danger size="small">
-              Xoa
+              Xóa
             </Button>
           </Popconfirm>
         </Space>
@@ -500,18 +500,18 @@ const ManageThietBiKhuVuc = () => {
       <Row gutter={[12, 12]} className="mb-3">
         <Col>
           <Button type="primary" onClick={openCreateModal}>
-            Them thiet bi khu vuc
+            Thêm thiết bị khu vực
           </Button>
         </Col>
         {isAdmin && (
           <Col>
-            <Button onClick={() => setIsGroupModalOpen(true)}>Quan ly nhom thiet bi</Button>
+            <Button onClick={() => setIsGroupModalOpen(true)}>Quản lý nhóm thiết bị</Button>
           </Col>
         )}
         <Col flex="220px">
           <Select
             allowClear
-            placeholder="Loc theo phan xuong"
+            placeholder="Lọc theo phân xưởng"
             value={selectedPhanXuongId}
             onChange={(v) => {
               setSelectedPhanXuongId(v)
@@ -527,7 +527,7 @@ const ManageThietBiKhuVuc = () => {
         <Col flex="220px">
           <Select
             allowClear
-            placeholder="Loc nhom thiet bi"
+            placeholder="Lọc theo nhóm thiết bị"
             value={selectedNhom}
             onChange={(v) => {
               setSelectedNhom(v)
@@ -552,12 +552,12 @@ const ManageThietBiKhuVuc = () => {
 
       <Row gutter={[12, 12]} className="mb-3">
         <Col xs={24} md={12} lg={6}>
-          <Card size="small" loading={statsLoading} title="Tong ban ghi">
+          <Card size="small" loading={statsLoading} title="Tổng bản ghi">
             <span className="text-xl font-semibold">{totalSummary.tongBanGhi}</span>
           </Card>
         </Col>
         <Col xs={24} md={12} lg={6}>
-          <Card size="small" loading={statsLoading} title="Tong so luong">
+          <Card size="small" loading={statsLoading} title="Tổng số lượng">
             <span className="text-xl font-semibold">{totalSummary.tongSoLuong}</span>
           </Card>
         </Col>
@@ -591,25 +591,25 @@ const ManageThietBiKhuVuc = () => {
       />
 
       <Modal
-        title={editingItem ? 'Cap nhat thiet bi khu vuc' : 'Them thiet bi khu vuc'}
+        title={editingItem ? 'Cap nhat thiet bi khu vuc' : 'Thêm mới thiết bị khu vực'}
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onOk={() => form.submit()}
-        okText={editingItem ? 'Cap nhat' : 'Them moi'}
-        cancelText="Huy"
+        okText={editingItem ? 'Cập nhật' : 'Thêm mới'}
+        cancelText="Hủy"
         confirmLoading={submitting}
         width={760}
       >
         <Form form={form} layout="vertical" onFinish={onSubmit}>
           <Row gutter={12}>
             <Col span={12}>
-              <Form.Item
+              <Form.Item  
                 name="phanXuongId"
-                label="Phan xuong"
-                rules={[{ required: true, message: 'Vui long chon phan xuong' }]}
+                label="Phân xưởng"
+                rules={[{ required: true, message: 'Vui lòng chọn phân xưởng' }]}
               >
                 <Select
-                  placeholder="Chon phan xuong"
+                  placeholder="Chọn phân xưởng"
                   options={phanXuongList.map((x) => ({
                     value: x.phanXuongId,
                     label: x.tenPhanXuong,
@@ -620,60 +620,60 @@ const ManageThietBiKhuVuc = () => {
             <Col span={12}>
               <Form.Item
                 name="nhomThietBi"
-                label="Nhom thiet bi"
-                rules={[{ required: true, message: 'Vui long chon nhom thiet bi' }]}
+                label="Nhóm thiết bị"
+                rules={[{ required: true, message: 'Vui lòng chọn nhóm thiết bị' }]}
               >
                 <Select
-                  placeholder="Chon nhom thiet bi"
+                  placeholder="Chọn nhóm thiết bị"
                   options={nhomOptions}
                   loading={groupLoading}
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="maVatTu" label="Ma vat tu">
-                <Input placeholder="Nhap ma vat tu" />
+              <Form.Item name="maVatTu" label="Mã vật tư">
+                <Input placeholder="Nhập mã vật tư" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="tenVatTu"
-                label="Ten vat tu"
-                rules={[{ required: true, message: 'Vui long nhap ten vat tu' }]}
+                label="Tên vật tư"
+                rules={[{ required: true, message: 'Vui lòng nhập tên vật tư' }]}
               >
-                <Input placeholder="Nhap ten vat tu" />
+                <Input placeholder="Nhập tên vật tư" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="viTri"
-                label="Vi tri trong phan xuong"
-                rules={[{ required: true, message: 'Vui long nhap vi tri' }]}
+                label="Vị trí trong phân xưởng"
+                rules={[{ required: true, message: 'Vui lòng nhập vị trí' }]}
               >
-                <Input placeholder="Vi du: Day chuyen 1 - Tu dien A3" />
+                <Input placeholder="Ví dụ: Dây chuyền 1 - Tủ điện A3" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="soLuong"
-                label="So luong"
-                rules={[{ required: true, message: 'Vui long nhap so luong' }]}
+                label="Số lượng"
+                rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
               >
                 <InputNumber min={0} className="w-full" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="serialNumber" label="Serial (neu co)">
-                <Input placeholder="Nhap serial" />
+              <Form.Item name="serialNumber" label="Serial (nêu có)">
+                <Input placeholder="Nhập serial" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="tinhTrang" label="Tinh trang">
-                <Input placeholder="Vi du: Tot, Dang sua, Hong..." />
+              <Form.Item name="tinhTrang" label="Tình trạng">
+                <Input placeholder="Ví dụ: Tốt, Đang sửa, Hỏng..." />
               </Form.Item>
             </Col>
             <Col span={24}>
-              <Form.Item name="lichSuThayThe" label="Lich su thay the">
+              <Form.Item name="lichSuThayThe" label="Lịch sử thay thế">
                 <Input.TextArea
                   rows={5}
                   placeholder={`Nhap moi lan thay the tren 1 dong, vi du:\n- Thay o cung ngay 30/06/2025\n- Nang cap RAM 8GB ngay 30/08/2025`}
@@ -685,7 +685,7 @@ const ManageThietBiKhuVuc = () => {
       </Modal>
 
       <Modal
-        title="Quan ly nhom thiet bi"
+        title="Quản lý nhóm thiết bị khu vực"
         open={isGroupModalOpen}
         onCancel={() => {
           setIsGroupModalOpen(false)
@@ -700,15 +700,15 @@ const ManageThietBiKhuVuc = () => {
             <Col span={editingGroup ? 10 : 14}>
               <Form.Item
                 name="tenNhom"
-                label="Ten nhom"
-                rules={[{ required: true, message: 'Vui long nhap ten nhom thiet bi' }]}
+                label="Tên nhóm"
+                rules={[{ required: true, message: 'Vui lòng nhập tên nhóm thiết bị' }]}
               >
-                <Input placeholder="Nhap ten nhom thiet bi" />
+                <Input placeholder="Nhập tên nhóm thiết bị" />
               </Form.Item>
             </Col>
             {editingGroup && (
               <Col span={8}>
-                <Form.Item name="maNhom" label="Ma nhom">
+                <Form.Item name="maNhom" label="Mã nhóm">
                   <Input disabled />
                 </Form.Item>
               </Col>
@@ -716,9 +716,9 @@ const ManageThietBiKhuVuc = () => {
             <Col span={editingGroup ? 6 : 10}>
               <Space>
                 <Button type="primary" htmlType="submit" loading={groupSubmitting}>
-                  {editingGroup ? 'Cap nhat nhom' : 'Them nhom'}
+                  {editingGroup ? 'Cập nhật nhóm' : 'Thêm nhóm'}
                 </Button>
-                <Button onClick={openCreateGroup}>Moi</Button>
+                <Button onClick={openCreateGroup}>Mới</Button>
               </Space>
             </Col>
           </Row>
