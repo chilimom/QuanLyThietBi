@@ -109,6 +109,7 @@ const formatNumber = (value) => new Intl.NumberFormat('vi-VN').format(value || 0
 const DashboardMetricCard = ({ item, loading, tone }) => (
   <Card
     bordered={false}
+    className="group transition-all duration-300 hover:-translate-y-1"
     style={{
       borderRadius: 20,
       background: tone.background,
@@ -131,7 +132,7 @@ const DashboardMetricCard = ({ item, loading, tone }) => (
           <div className="mt-2 text-sm text-slate-600">{item.helper}</div>
         </div>
         <div
-          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 text-xl shadow-sm"
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 text-xl shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md"
           style={{ color: tone.accent }}
         >
           {item.icon}
@@ -152,6 +153,8 @@ const Dashboard = () => {
     phanXuongList: [],
     thietBiCount: 0,
     vatTuCount: 0,
+    thietBiItems: [],
+    vatTuItems: [],
     userCount: 0,
     recentAreaEquipment: [],
     statusSummary: [],
@@ -172,8 +175,8 @@ const Dashboard = () => {
         apiGetThietBiKhuVucStatistics(),
         apiGetNhomThietBiKhuVuc(),
         apiGetPhanXuong(),
-        apiGetTB({ page: 1, limit: 1 }),
-        apiGetVT({ page: 1, limit: 1 }),
+        apiGetTB({ page: 1, limit: 200 }),
+        apiGetVT({ page: 1, limit: 200 }),
         isAdmin ? apiGetAllNguoiDung({ page: 1, limit: 1 }) : Promise.resolve(null),
         apiGetThietBiKhuVuc({ page: 1, limit: 200 }),
       ])
@@ -214,6 +217,8 @@ const Dashboard = () => {
         phanXuongList,
         thietBiCount: getSafeTotal(thietBiData, thietBiItems),
         vatTuCount: getSafeTotal(vatTuData, vatTuItems),
+        thietBiItems,
+        vatTuItems,
         userCount: isAdmin ? getSafeTotal(userData, userItems) : 0,
         recentAreaEquipment: khuVucItems.slice(0, 6),
         statusSummary,
@@ -225,6 +230,8 @@ const Dashboard = () => {
         phanXuongList: [],
         thietBiCount: 0,
         vatTuCount: 0,
+        thietBiItems: [],
+        vatTuItems: [],
         userCount: 0,
         recentAreaEquipment: [],
         statusSummary: [],
@@ -305,8 +312,28 @@ const Dashboard = () => {
       .slice(0, 6)
   }, [dashboardData.stats])
 
+  const baoTriSummary = useMemo(() => {
+    return dashboardData.vatTuItems
+      .reduce((acc, item) => {
+        const label =
+          item.tenPhanXuong ||
+          item.donVi ||
+          (item.phanXuongId ? `Phân xưởng ${item.phanXuongId}` : 'Chưa phân loại')
+        acc[label] = (acc[label] || 0) + 1
+        return acc
+      }, {})
+  }, [dashboardData.vatTuItems])
+
+  const baoTriTopSummary = useMemo(() => {
+    return Object.entries(baoTriSummary)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6)
+  }, [baoTriSummary])
+
   const highestGroupTotal = groupSummary[0]?.tongSoLuong || 1
   const highestWorkshopTotal = phanXuongSummary[0]?.tongSoLuong || 1
+  const highestBaoTriTotal = baoTriTopSummary[0]?.value || 1
   const totalStatusValue = dashboardData.statusSummary.reduce((sum, item) => sum + item.value, 0) || 1
 
   const metrics = [
@@ -371,7 +398,7 @@ const Dashboard = () => {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 rounded-[32px] bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.08),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.08),_transparent_24%),linear-gradient(180deg,_rgba(248,250,252,0.92),_rgba(255,255,255,0.98))] p-3">
       <section className="rounded-[28px] border border-slate-200 bg-gradient-to-r from-white via-sky-50 to-blue-50 p-6 shadow-sm">
         <div className="grid gap-6 lg:grid-cols-[1.4fr_0.9fr]">
           <div>
@@ -417,7 +444,10 @@ const Dashboard = () => {
             </div>
             <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {(loading ? Array.from({ length: 3 }) : dashboardData.statusSummary.slice(0, 3)).map((item, index) => (
-                <div key={item?.label || index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+                <div
+                  key={item?.label || index}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:bg-white hover:shadow-md"
+                >
                   {loading ? (
                     <Skeleton active paragraph={{ rows: 2 }} />
                   ) : (
@@ -464,7 +494,12 @@ const Dashboard = () => {
           <Card
             bordered={false}
             className="h-full"
-            style={{ borderRadius: 24, boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)' }}
+            style={{
+              borderRadius: 24,
+              boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)',
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(239,246,255,0.88) 100%)',
+            }}
             bodyStyle={{ padding: 24 }}
             title={<span className="text-base font-semibold text-slate-800">Tổng hợp thiết bị</span>}
           
@@ -484,17 +519,20 @@ const Dashboard = () => {
                 loading ? (
                   <Skeleton key={index} active paragraph={{ rows: 1 }} title={false} />
                 ) : (
-                  <div key={item.maNhom} className="flex h-full flex-col justify-end">
+                  <div
+                    key={item.maNhom}
+                    className="group flex h-full cursor-pointer flex-col justify-end rounded-2xl px-1 py-2 transition-all duration-300 hover:-translate-y-1"
+                  >
                     <div className="mb-3 text-center text-sm font-semibold text-slate-500">
                       {formatNumber(item.tongSoLuong)}
                     </div>
-                    <div className="flex h-[220px] items-end rounded-[20px] bg-slate-100/90 p-2">
+                    <div className="flex h-[220px] items-end rounded-[20px] bg-slate-100/90 p-2 transition-all duration-300 group-hover:bg-slate-100 group-hover:shadow-inner">
                       <div
-                        className="w-full rounded-[14px] bg-gradient-to-t from-blue-600 via-sky-500 to-cyan-300 shadow-[0_14px_24px_rgba(14,165,233,0.28)] transition-all duration-300"
+                        className="w-full rounded-[14px] bg-gradient-to-t from-blue-600 via-sky-500 to-cyan-300 shadow-[0_14px_24px_rgba(14,165,233,0.28)] transition-all duration-300 group-hover:scale-[1.02] group-hover:shadow-[0_18px_30px_rgba(14,165,233,0.36)]"
                         style={{ height: `${Math.max((item.tongSoLuong / highestGroupTotal) * 100, 12)}%` }}
                       />
                     </div>
-                    <div className="mt-3 text-center text-sm font-medium leading-5 text-slate-700">
+                    <div className="mt-3 text-center text-sm font-medium leading-5 text-slate-700 transition-colors duration-300 group-hover:text-slate-900">
                       {item.tenNhom}
                     </div>
                   </div>
@@ -508,7 +546,12 @@ const Dashboard = () => {
           <Card
             bordered={false}
             className="h-full"
-            style={{ borderRadius: 24, boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)' }}
+            style={{
+              borderRadius: 24,
+              boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)',
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(236,253,245,0.88) 100%)',
+            }}
             bodyStyle={{ padding: 24 }}
             title={<span className="text-base font-semibold text-slate-800">Theo phân xưởng</span>}
           >
@@ -517,19 +560,22 @@ const Dashboard = () => {
                 loading ? (
                   <Skeleton key={index} active paragraph={{ rows: 2 }} />
                 ) : (
-                  <div key={item.tenPhanXuong} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div
+                    key={item.tenPhanXuong}
+                    className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+                  >
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <div>
                         <div className="font-semibold text-slate-800">{item.tenPhanXuong}</div>
                         <div className="text-sm text-slate-500">{formatNumber(item.tongBanGhi)} bản ghi</div>
                       </div>
-                      <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500">
+                      <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500 transition-all duration-300 group-hover:bg-emerald-50 group-hover:text-emerald-700">
                         {formatNumber(item.tongSoLuong)}
                       </div>
                     </div>
                     <div className="h-2 rounded-full bg-white">
                       <div
-                        className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-lime-400"
+                        className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-lime-400 transition-all duration-300 group-hover:brightness-110"
                         style={{ width: `${Math.max((item.tongSoLuong / highestWorkshopTotal) * 100, 10)}%` }}
                       />
                     </div>
@@ -545,7 +591,12 @@ const Dashboard = () => {
         <Col xs={24} xl={16}>
           <Card
             bordered={false}
-            style={{ borderRadius: 24, boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)' }}
+            style={{
+              borderRadius: 24,
+              boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)',
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%)',
+            }}
             bodyStyle={{ padding: 20 }}
             title={<span className="text-base font-semibold text-slate-800">Thiết bị khu vực gần đây</span>}
             extra={
@@ -572,7 +623,12 @@ const Dashboard = () => {
         <Col xs={24} xl={8}>
           <Card
             bordered={false}
-            style={{ borderRadius: 24, boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)' }}
+            style={{
+              borderRadius: 24,
+              boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)',
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,247,237,0.72) 100%)',
+            }}
             bodyStyle={{ padding: 24 }}
             title={<span className="text-base font-semibold text-slate-800">Gợi ý thao tác</span>}
           >
