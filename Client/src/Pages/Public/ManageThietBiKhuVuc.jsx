@@ -108,6 +108,16 @@ const renderStatsCard = (title, value, tone = STAT_CARD_STYLES.default) => (
   </Card>
 )
 
+const toolbarControlStyle = {
+  borderRadius: 10,
+}
+
+const toolbarButtonStyle = {
+  height: 40,
+  borderRadius: 10,
+  fontWeight: 600,
+}
+
 const ManageThietBiKhuVuc = () => {
   const { current } = useSelector((state) => state.user)
   const isAdmin = current?.idQuyen === ADMIN_ROLE_ID
@@ -548,58 +558,84 @@ const ManageThietBiKhuVuc = () => {
 
   return (
     <div className="w-full text-[13.5px] text-gray-800 font-medium">
-      <Row gutter={[12, 12]} className="mb-3">
-        <Col>
-          <Button type="primary" onClick={openCreateModal}>
-            Thêm thiết bị khu vực
-          </Button>
-        </Col>
-        {isAdmin && (
+      <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <Row gutter={[12, 12]} className="mb-0">
           <Col>
-            <Button onClick={() => setIsGroupModalOpen(true)}>Quản lý nhóm thiết bị</Button>
+            <Button
+              type="primary"
+              onClick={openCreateModal}
+              style={{
+                ...toolbarButtonStyle,
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                boxShadow: '0 10px 18px rgba(37, 99, 235, 0.2)',
+              }}
+            >
+              Thêm thiết bị khu vực
+            </Button>
           </Col>
-        )}
-        <Col flex="220px">
-          <Select
-            allowClear
-            placeholder="Lọc theo phân xưởng"
-            value={selectedPhanXuongId}
-            onChange={(v) => {
-              setSelectedPhanXuongId(v)
-              setPage(1)
-            }}
-            options={phanXuongList.map((x) => ({
-              value: x.phanXuongId,
-              label: x.tenPhanXuong,
-            }))}
-            className="w-full"
-          />
-        </Col>
-        <Col flex="220px">
-          <Select
-            allowClear
-            placeholder="Lọc theo nhóm thiết bị"
-            value={selectedNhom}
-            onChange={(v) => {
-              setSelectedNhom(v)
-              setPage(1)
-            }}
-            options={nhomOptions}
-            className="w-full"
-            loading={groupLoading}
-          />
-        </Col>
-        <Col flex="300px">
-          <Input.Search
-            allowClear
-            placeholder="Tim ma vat tu, ten vat tu, vi tri, serial, tinh trang..."
-            onSearch={(value) => {
-              setKeyword(value || '')
-              setPage(1)
-            }}
-          />
-        </Col>
-      </Row>
+          {isAdmin && (
+            <Col>
+              <Button
+                onClick={() => setIsGroupModalOpen(true)}
+                style={{
+                  ...toolbarButtonStyle,
+                  borderColor: '#cbd5e1',
+                  color: '#334155',
+                  background: '#f8fafc',
+                }}
+              >
+                Quản lý nhóm thiết bị
+              </Button>
+            </Col>
+          )}
+          <Col flex="220px">
+            <Select
+              allowClear
+              placeholder="Lọc theo phân xưởng"
+              value={selectedPhanXuongId}
+              onChange={(v) => {
+                setSelectedPhanXuongId(v)
+                setPage(1)
+              }}
+              options={phanXuongList.map((x) => ({
+                value: x.phanXuongId,
+                label: x.tenPhanXuong,
+              }))}
+              className="w-full"
+              style={toolbarControlStyle}
+              size="large"
+            />
+          </Col>
+          <Col flex="220px">
+            <Select
+              allowClear
+              placeholder="Lọc theo nhóm thiết bị"
+              value={selectedNhom}
+              onChange={(v) => {
+                setSelectedNhom(v)
+                setPage(1)
+              }}
+              options={nhomOptions}
+              className="w-full"
+              loading={groupLoading}
+              style={toolbarControlStyle}
+              size="large"
+            />
+          </Col>
+          <Col flex="300px">
+            <Input.Search
+              allowClear
+              placeholder="Tìm mã vật tư, tên vật tư, vị trí, serial, tình trạng..."
+              onSearch={(value) => {
+                setKeyword(value || '')
+                setPage(1)
+              }}
+              size="large"
+              style={toolbarControlStyle}
+            />
+          </Col>
+        </Row>
+      </div>
 
       <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 shadow-sm">
         <Row gutter={[12, 12]}>
