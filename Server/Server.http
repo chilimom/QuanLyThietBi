@@ -1,4 +1,4 @@
-@Server_HostAddress = http://10.192.72.45:8888
+@Server_HostAddress = http://10.192.72.45:5173
 
 GET {{Server_HostAddress}}/weatherforecast/
 Accept: application/json

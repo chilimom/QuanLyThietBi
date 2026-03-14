@@ -57,6 +57,57 @@ const renderCompactText = (value, fallback = 'Chua cap nhat') => {
   )
 }
 
+const STAT_CARD_STYLES = {
+  tongBanGhi: {
+    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+    borderColor: '#93c5fd',
+    accent: '#1d4ed8',
+  },
+  tongSoLuong: {
+    background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+    borderColor: '#86efac',
+    accent: '#047857',
+  },
+  default: {
+    background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+    borderColor: '#fdba74',
+    accent: '#c2410c',
+  },
+}
+
+const renderStatsCard = (title, value, tone = STAT_CARD_STYLES.default) => (
+  <Card
+    size="small"
+    title={<span className="font-semibold text-slate-700">{title}</span>}
+    styles={{
+      body: {
+        background: tone.background,
+        borderTop: `1px solid ${tone.borderColor}`,
+        borderRadius: '0 0 12px 12px',
+      },
+      header: {
+        background: '#ffffff',
+        borderBottom: `1px solid ${tone.borderColor}`,
+        borderRadius: '12px 12px 0 0',
+      },
+    }}
+    style={{
+      borderColor: tone.borderColor,
+      borderRadius: 12,
+      boxShadow: '0 10px 24px rgba(15, 23, 42, 0.06)',
+    }}
+  >
+    <div className="flex items-end justify-between">
+      <span className="text-3xl font-bold tracking-tight" style={{ color: tone.accent }}>
+        {value}
+      </span>
+      {/* <span className="rounded-full bg-white/80 px-2 py-1 text-xs font-medium text-slate-500">
+        Tong quan
+      </span> */}
+    </div>
+  </Card>
+)
+
 const ManageThietBiKhuVuc = () => {
   const { current } = useSelector((state) => state.user)
   const isAdmin = current?.idQuyen === ADMIN_ROLE_ID
@@ -550,25 +601,33 @@ const ManageThietBiKhuVuc = () => {
         </Col>
       </Row>
 
-      <Row gutter={[12, 12]} className="mb-3">
-        <Col xs={24} md={12} lg={6}>
-          <Card size="small" loading={statsLoading} title="Tổng bản ghi">
-            <span className="text-xl font-semibold">{totalSummary.tongBanGhi}</span>
-          </Card>
-        </Col>
-        <Col xs={24} md={12} lg={6}>
-          <Card size="small" loading={statsLoading} title="Tổng số lượng">
-            <span className="text-xl font-semibold">{totalSummary.tongSoLuong}</span>
-          </Card>
-        </Col>
-        {groupSummaryCards.map((group) => (
-          <Col xs={24} md={12} lg={6} key={group.maNhom}>
-            <Card size="small" loading={statsLoading} title={group.tenNhom}>
-              <span className="text-xl font-semibold">{group.tongSoLuong}</span>
-            </Card>
+      <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 shadow-sm">
+        <Row gutter={[12, 12]}>
+          <Col xs={24} md={12} lg={6}>
+            {statsLoading ? (
+              <Card size="small" loading />
+            ) : (
+              renderStatsCard('Tổng bản ghi', totalSummary.tongBanGhi, STAT_CARD_STYLES.tongBanGhi)
+            )}
           </Col>
-        ))}
-      </Row>
+          <Col xs={24} md={12} lg={6}>
+            {statsLoading ? (
+              <Card size="small" loading />
+            ) : (
+              renderStatsCard('Tổng số lượng', totalSummary.tongSoLuong, STAT_CARD_STYLES.tongSoLuong)
+            )}
+          </Col>
+          {groupSummaryCards.map((group) => (
+            <Col xs={24} md={12} lg={6} key={group.maNhom}>
+              {statsLoading ? (
+                <Card size="small" loading />
+              ) : (
+                renderStatsCard(group.tenNhom, group.tongSoLuong)
+              )}
+            </Col>
+          ))}
+        </Row>
+      </div>
 
       <Table
         rowKey="id"

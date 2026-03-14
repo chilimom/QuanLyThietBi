@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 127.0.0.1 --port 3001",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --host 127.0.0.1 --port 3001",
+    "preview:deploy": "vite preview --host 0.0.0.0 --port 3000"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
