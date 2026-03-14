@@ -1,15 +1,17 @@
 import { Fragment, memo, useEffect, useMemo, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { HomeSidebar } from '../../ultils/contain'
 import clsx from 'clsx'
 import icons from '../../ultils/icons'
 import logo from '../../assets/image/Logo.png'
 import { useSelector } from 'react-redux'
+import path from '../../ultils/path'
 
 const { FaSortDown, FaCaretRight } = icons
 
 const Sidebar = ({ isMini, onExpand }) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { current } = useSelector((state) => state.user)
   //   const { currentNav } = useSelector((state) => state.nav)
   const sidebarItems = useMemo(() => {
@@ -32,13 +34,13 @@ const Sidebar = ({ isMini, onExpand }) => {
     setIsFirstRender(true)
 
     //  Tự động chuyển đến "TỔNG QUAN" nếu có
-    const defaultItem = sidebarItems.find(
-      (item) => item.text === 'QUẢN LÝ THIẾT BỊ' && item.type === 'SINGLE'
-    )
-    if (defaultItem) {
+    const defaultItem = sidebarItems.find((item) => item.text === 'Dashboard' && item.type === 'SINGLE')
+    const isLayoutRoot =
+      location.pathname === `/${path.LAYOUT}` || location.pathname === `/${path.LAYOUT}/`
+    if (defaultItem && isLayoutRoot) {
       navigate(defaultItem.path)
     }
-  }, [navigate, sidebarItems])
+  }, [location.pathname, navigate, sidebarItems])
   const handleShowTabs = (tabID) => {
     setActived((prev) =>
       prev.includes(tabID) ? prev.filter((el) => el !== tabID) : [...prev, tabID]
@@ -46,8 +48,10 @@ const Sidebar = ({ isMini, onExpand }) => {
   }
   // console.log(sidebarItems)
 
-  const ActiveStyle = 'bg-gray-200 text-blue-600 no-underline'
-  const NotActiveStyle = 'hover:bg-gray-100 text-gray-800 no-underline'
+  const ActiveStyle =
+    'bg-gradient-to-r from-blue-50 via-white to-blue-100 text-blue-700 shadow-[inset_4px_0_0_#2563eb] no-underline'
+  const NotActiveStyle =
+    'text-slate-700 no-underline hover:bg-white hover:text-slate-900 hover:shadow-sm'
 
   useEffect(() => {
     // Reset menu states khi đổi khu vực/xưởng
@@ -67,14 +71,19 @@ const Sidebar = ({ isMini, onExpand }) => {
   }, [isFirstRender])
 
   return (
-    <div className="flex flex-col h-screen overflow-y-auto bg-white border-r border-gray-200">
+    <div className="flex flex-col h-screen overflow-y-auto border-r border-slate-200 bg-gradient-to-b from-slate-50 via-white to-slate-100/80">
       {/* Logo */}
-      <div className={clsx('flex items-center justify-center', isMini ? 'h-[100px]' : 'h-[100px]')}>
+      <div
+        className={clsx(
+          'flex items-center justify-center border-b border-slate-200/80 bg-white/80 backdrop-blur',
+          isMini ? 'h-[100px]' : 'h-[100px]'
+        )}
+      >
         {!isMini && <img src={logo} alt="logo" className="w-[180px] object-contain pb-[50px]" />}
       </div>
 
       {/* Menu */}
-      <div className="flex flex-col flex-1 space-y-1">
+      <div className="flex flex-col flex-1 gap-1 px-2 py-3">
         {sidebarItems?.map((el) => (
           <Fragment key={el.id}>
             {/* SINGLE */}
@@ -84,15 +93,15 @@ const Sidebar = ({ isMini, onExpand }) => {
                 onClick={() => isMini && onExpand()}
                 className={({ isActive }) =>
                   clsx(
-                    'flex items-center py-3 transition-all no-underline',
-                    isMini ? 'justify-center px-0' : 'gap-2 px-4',
+                    'flex items-center rounded-xl py-3 transition-all duration-200 no-underline',
+                    isMini ? 'justify-center px-0 mx-1' : 'gap-3 px-4 mx-1',
                     isActive && ActiveStyle,
                     !isActive && NotActiveStyle
                   )
                 }
               >
-                <span className="text-[20px]">{el.icon}</span>
-                {!isMini && <span className="text-sm">{el.text}</span>}
+                <span className="flex h-6 w-6 items-center justify-center text-[18px]">{el.icon}</span>
+                {!isMini && <span className="text-sm font-medium leading-5">{el.text}</span>}
               </NavLink>
             )}
 
@@ -107,19 +116,21 @@ const Sidebar = ({ isMini, onExpand }) => {
               >
                 <div
                   className={clsx(
-                    'flex items-center py-3 hover:bg-gray-100',
-                    isMini ? 'justify-center px-0' : 'justify-between px-4'
+                    'flex items-center rounded-xl py-3 transition-all duration-200 hover:bg-white hover:shadow-sm',
+                    isMini ? 'justify-center px-0 mx-1' : 'justify-between px-4 mx-1'
                   )}
                 >
-                  <div className={clsx('flex items-center', isMini ? 'justify-center' : 'gap-2')}>
-                    <span className="text-[20px]">{el.icon}</span>
-                    {!isMini && <span className="text-sm">{el.text}</span>}
+                  <div className={clsx('flex items-center', isMini ? 'justify-center' : 'gap-3')}>
+                    <span className="flex h-6 w-6 items-center justify-center text-[18px] text-slate-700">
+                      {el.icon}
+                    </span>
+                    {!isMini && <span className="text-sm font-semibold tracking-[0.01em] text-slate-800">{el.text}</span>}
                   </div>
                   {!isMini &&
                     (actived.includes(el.id) ? (
-                      <FaCaretRight size={16} />
+                      <FaCaretRight size={16} className="text-blue-600" />
                     ) : (
-                      <FaSortDown size={16} />
+                      <FaSortDown size={16} className="text-slate-400" />
                     ))}
                 </div>
 
@@ -147,13 +158,13 @@ const Sidebar = ({ isMini, onExpand }) => {
                                   [el.id]: prev[el.id] === idx ? null : idx,
                                 }))
                               }}
-                              className="flex items-center justify-between py-2 text-sm text-gray-700 cursor-pointer hover:text-blue-500 hover:bg-gray-100 hover:text-[15px]"
+                              className="mx-1 flex items-center justify-between rounded-lg py-2.5 text-sm text-slate-600 cursor-pointer transition-all duration-200 hover:bg-white hover:text-blue-600"
                             >
-                              <div className="flex gap-1 pl-6">
+                              <div className="flex gap-2 pl-6">
                                 <span>{item.icon}</span>
-                                <span>{item.text}</span>
+                                <span className="font-medium">{item.text}</span>
                               </div>
-                              <span className="mr-[15px]">
+                              <span className="mr-[15px] text-slate-400">
                                 {activeSubmenu[el.id] === idx ? (
                                   <FaCaretRight size={16} />
                                 ) : (
@@ -186,20 +197,20 @@ const Sidebar = ({ isMini, onExpand }) => {
                                           <>
                                             {/* Level 3 toggle */}
                                             <div
-                                              onClick={(e) => {
+                                            onClick={(e) => {
                                                 e.stopPropagation()
                                                 setActiveSubSubmenu((prev) => ({
                                                   ...prev,
                                                   [el.id]: prev[el.id] === key ? null : key,
                                                 }))
                                               }}
-                                              className="flex items-center justify-between py-2 text-sm text-gray-700 cursor-pointer hover:text-blue-500 hover:bg-gray-100 hover:text-[15px]"
+                                              className="mx-1 flex items-center justify-between rounded-lg py-2.5 text-sm text-slate-600 cursor-pointer transition-all duration-200 hover:bg-white hover:text-blue-600"
                                             >
-                                              <div className="flex gap-1 pl-8">
+                                              <div className="flex gap-2 pl-8">
                                                 <span>{child.icon}</span>
-                                                <span>{child.text}</span>
+                                                <span className="font-medium">{child.text}</span>
                                               </div>
-                                              <span className="mr-[15px]">
+                                              <span className="mr-[15px] text-slate-400">
                                                 {activeSubSubmenu[el.id] === key ? (
                                                   <FaCaretRight size={16} />
                                                 ) : (
@@ -233,14 +244,14 @@ const Sidebar = ({ isMini, onExpand }) => {
                                                       onClick={(e) => e.stopPropagation()}
                                                       className={({ isActive }) =>
                                                         clsx(
-                                                          'py-2 text-sm no-underline',
+                                                          'mx-1 rounded-lg py-2.5 text-sm no-underline transition-all duration-200',
                                                           isActive
-                                                            ? 'text-blue-600 font-medium bg-gray-200 text-[15px]'
-                                                            : 'hover:bg-gray-100 hover:text-blue-500 hover:text-[15px]'
+                                                            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-semibold shadow-[inset_3px_0_0_#2563eb]'
+                                                            : 'text-slate-600 hover:bg-white hover:text-blue-600'
                                                         )
                                                       }
                                                     >
-                                                      <div className="flex gap-1 pl-10">
+                                                      <div className="flex gap-2 pl-10">
                                                         <span>{subchild.icon}</span>
                                                         <span>{subchild.text}</span>
                                                       </div>
@@ -256,14 +267,14 @@ const Sidebar = ({ isMini, onExpand }) => {
                                             onClick={(e) => e.stopPropagation()}
                                             className={({ isActive }) =>
                                               clsx(
-                                                'block w-full text-sm no-underline',
+                                                'mx-1 block w-full rounded-lg text-sm no-underline transition-all duration-200',
                                                 isActive
-                                                  ? 'text-blue-600 font-medium bg-gray-200 text-[15px] '
-                                                  : 'hover:bg-gray-100 hover:text-blue-500 hover:text-[15px]'
+                                                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-semibold shadow-[inset_3px_0_0_#2563eb]'
+                                                  : 'text-slate-600 hover:bg-white hover:text-blue-600'
                                               )
                                             }
                                           >
-                                            <div className="flex gap-1 py-2 pl-8 ">
+                                            <div className="flex gap-2 py-2.5 pl-8">
                                               <span>{child.icon}</span>
                                               <span>{child.text}</span>
                                             </div>
@@ -282,14 +293,14 @@ const Sidebar = ({ isMini, onExpand }) => {
                             onClick={(e) => e.stopPropagation()}
                             className={({ isActive }) =>
                               clsx(
-                                'flex items-center justify-between py-2 text-sm text-gray-700 cursor-pointer hover:text-blue-500 hover:bg-gray-100 hover:text-[15px]',
+                                'mx-1 flex items-center justify-between rounded-lg py-2.5 text-sm cursor-pointer no-underline transition-all duration-200',
                                 isActive
-                                  ? 'text-blue-600 font-medium bg-gray-200'
-                                  : 'text-gray-700 hover:text-blue-500 hover:text-[15px] hover:bg-gray-100'
+                                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-semibold shadow-[inset_3px_0_0_#2563eb]'
+                                  : 'text-slate-600 hover:bg-white hover:text-blue-600'
                               )
                             }
                           >
-                            <div className="flex gap-1 pl-6">
+                            <div className="flex gap-2 pl-6">
                               <span>{item.icon}</span>
                               <span>{item.text}</span>
                             </div>

@@ -1,3 +1,4 @@
+export { default as Dashboard } from './Dashboard'
 export { default as ManageThietBi } from './ManageThietBi'
 export { default as ManageThietBiKhuVuc } from './ManageThietBiKhuVuc'
 export { default as VatTuBaoTri } from './VatTuBaoTri'

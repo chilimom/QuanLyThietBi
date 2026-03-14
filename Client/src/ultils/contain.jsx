@@ -2,6 +2,7 @@
 import path from './path'
 
 const {
+  MdOutlineDashboardCustomize,
   TbCircleNumber1Filled,
   TbCircleNumber2Filled,
   TbCircleNumber3Filled,
@@ -14,6 +15,13 @@ const {
 } = icons
 
 export const HomeSidebar = (current) => [
+  {
+    id: 0,
+    type: 'SINGLE',
+    text: 'Dashboard',
+    icon: <MdOutlineDashboardCustomize size={24} />,
+    path: `/${path.LAYOUT}/${path.DASHBOARD}`,
+  },
   {
     id: 1,
     type: 'SINGLE',

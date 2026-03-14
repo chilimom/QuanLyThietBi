@@ -8,6 +8,7 @@ import {
   AdminShift,
   AdminTeam,
   AdminWorkshop,
+  Dashboard,
   Login,
   ManageThietBi,
   ManageThietBiKhuVuc,
@@ -27,9 +28,11 @@ function App() {
         <Route path={path.LOGIN} element={<Login />} />
         <Route
           path="/admin"
-          element={<Navigate to={`/${path.LAYOUT}/${path.MANAGE_USER}`} replace />}
+          element={<Navigate to={`/${path.LAYOUT}/${path.DASHBOARD}`} replace />}
         />
         <Route path={path.LAYOUT} element={<Layout />}>
+          <Route index element={<Navigate to={path.DASHBOARD} replace />} />
+          <Route path={path.DASHBOARD} element={<Dashboard />} />
           <Route path={path.MANAGE_TB} element={<ManageThietBi />} />
           <Route path={path.MANAGE_VT} element={<VatTuBaoTri />} />
           <Route path={path.MANAGE_TB_KHU_VUC} element={<ManageThietBiKhuVuc />} />

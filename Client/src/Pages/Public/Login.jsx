@@ -74,7 +74,7 @@ const Login = () => {
           dispatch(getCurent())
 
           toast.success(rs.message)
-          navigate(`/${path.LAYOUT}/${path.MANAGE_TB}`)
+          navigate(`/${path.LAYOUT}/${path.DASHBOARD}`)
         } else {
           toast.error(rs.message || 'Đăng nhập thất bại!')
         }

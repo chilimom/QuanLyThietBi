@@ -1,5 +1,6 @@
 const path = {
   LAYOUT: 'layout',
+  DASHBOARD: 'dashboard',
   MANAGE_TB: 'manage_thietbi',
   MANAGE_VT: 'manage_vattu',
   MANAGE_TB_KHU_VUC: 'manage_thietbi_khuvuc',
