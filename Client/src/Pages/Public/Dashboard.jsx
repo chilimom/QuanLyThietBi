@@ -87,6 +87,9 @@ const getSafeArray = (response) => {
 const getSafeTotal = (response, fallbackArray = []) =>
   response?.totalItems || response?.counts || fallbackArray.length || 0
 
+const getSettledValue = (result, fallback = null) =>
+  result?.status === 'fulfilled' ? result.value : fallback
+
 const getStatusMeta = (value) => {
   const normalized = (value || '').toLowerCase()
   if (normalized.includes('tot') || normalized.includes('ok')) {
@@ -140,6 +143,7 @@ const DashboardMetricCard = ({ item, loading, tone }) => (
 
 const Dashboard = () => {
   const { current } = useSelector((state) => state.user)
+  const isAdmin = current?.idQuyen === 4
   const [loading, setLoading] = useState(true)
   const [selectedChartPhanXuongId, setSelectedChartPhanXuongId] = useState()
   const [dashboardData, setDashboardData] = useState({
@@ -164,23 +168,31 @@ const Dashboard = () => {
         vatTuRes,
         userRes,
         khuVucListRes,
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         apiGetThietBiKhuVucStatistics(),
         apiGetNhomThietBiKhuVuc(),
         apiGetPhanXuong(),
         apiGetTB({ page: 1, limit: 1 }),
         apiGetVT({ page: 1, limit: 1 }),
-        apiGetAllNguoiDung({ page: 1, limit: 1 }),
+        isAdmin ? apiGetAllNguoiDung({ page: 1, limit: 1 }) : Promise.resolve(null),
         apiGetThietBiKhuVuc({ page: 1, limit: 200 }),
       ])
 
-      const stats = khuVucStatsRes?.status ? khuVucStatsRes.data || [] : []
-      const nhomList = nhomRes?.status ? nhomRes.data || [] : []
-      const phanXuongList = getSafeArray(phanXuongRes)
-      const thietBiItems = getSafeArray(thietBiRes)
-      const vatTuItems = getSafeArray(vatTuRes)
-      const userItems = getSafeArray(userRes)
-      const khuVucItems = khuVucListRes?.status ? khuVucListRes.data || [] : []
+      const khuVucStatsData = getSettledValue(khuVucStatsRes)
+      const nhomData = getSettledValue(nhomRes)
+      const phanXuongData = getSettledValue(phanXuongRes, [])
+      const thietBiData = getSettledValue(thietBiRes, {})
+      const vatTuData = getSettledValue(vatTuRes, {})
+      const userData = getSettledValue(userRes, {})
+      const khuVucListData = getSettledValue(khuVucListRes)
+
+      const stats = khuVucStatsData?.status ? khuVucStatsData.data || [] : []
+      const nhomList = nhomData?.status ? nhomData.data || [] : []
+      const phanXuongList = getSafeArray(phanXuongData)
+      const thietBiItems = getSafeArray(thietBiData)
+      const vatTuItems = getSafeArray(vatTuData)
+      const userItems = getSafeArray(userData)
+      const khuVucItems = khuVucListData?.status ? khuVucListData.data || [] : []
 
       const statusMap = khuVucItems.reduce((acc, item) => {
         const meta = getStatusMeta(item.tinhTrang)
@@ -200,9 +212,9 @@ const Dashboard = () => {
         stats,
         nhomList,
         phanXuongList,
-        thietBiCount: getSafeTotal(thietBiRes, thietBiItems),
-        vatTuCount: getSafeTotal(vatTuRes, vatTuItems),
-        userCount: getSafeTotal(userRes, userItems),
+        thietBiCount: getSafeTotal(thietBiData, thietBiItems),
+        vatTuCount: getSafeTotal(vatTuData, vatTuItems),
+        userCount: isAdmin ? getSafeTotal(userData, userItems) : 0,
         recentAreaEquipment: khuVucItems.slice(0, 6),
         statusSummary,
       })
@@ -220,7 +232,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [isAdmin])
 
   useEffect(() => {
     loadDashboard()
