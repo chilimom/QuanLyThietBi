@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Card, Col, Progress, Row, Skeleton, Table, Tag } from 'antd'
+import { Card, Col, Progress, Row, Select, Skeleton, Table, Tag } from 'antd'
 import { Link } from 'react-router-dom'
 import {
   apiGetAllNguoiDung,
@@ -141,6 +141,7 @@ const DashboardMetricCard = ({ item, loading, tone }) => (
 const Dashboard = () => {
   const { current } = useSelector((state) => state.user)
   const [loading, setLoading] = useState(true)
+  const [selectedChartPhanXuongId, setSelectedChartPhanXuongId] = useState()
   const [dashboardData, setDashboardData] = useState({
     stats: [],
     nhomList: [],
@@ -225,8 +226,24 @@ const Dashboard = () => {
     loadDashboard()
   }, [loadDashboard])
 
+  const phanXuongOptions = useMemo(
+    () => [
+      { value: undefined, label: 'Tất cả phân xưởng' },
+      ...dashboardData.phanXuongList.map((item) => ({
+        value: item.phanXuongId,
+        label: item.tenPhanXuong || `Phân xưởng ${item.phanXuongId}`,
+      })),
+    ],
+    [dashboardData.phanXuongList]
+  )
+
+  const filteredStats = useMemo(() => {
+    if (!selectedChartPhanXuongId) return dashboardData.stats
+    return dashboardData.stats.filter((item) => item.phanXuongId === selectedChartPhanXuongId)
+  }, [dashboardData.stats, selectedChartPhanXuongId])
+
   const totalSummary = useMemo(() => {
-    return dashboardData.stats.reduce(
+    return filteredStats.reduce(
       (acc, item) => {
         acc.tongBanGhi += item.tongBanGhi || 0
         acc.tongSoLuong += item.tongSoLuong || 0
@@ -252,7 +269,7 @@ const Dashboard = () => {
         tongTheoNhom: {},
       }
     )
-  }, [dashboardData.stats])
+  }, [filteredStats])
 
   const groupSummary = useMemo(() => {
     return dashboardData.nhomList
@@ -437,7 +454,18 @@ const Dashboard = () => {
             className="h-full"
             style={{ borderRadius: 24, boxShadow: '0 18px 32px rgba(15, 23, 42, 0.05)' }}
             bodyStyle={{ padding: 24 }}
-            title={<span className="text-base font-semibold text-slate-800">Top nhóm thiết bị</span>}
+            title={<span className="text-base font-semibold text-slate-800">Tổng hợp thiết bị</span>}
+          
+            extra={
+              <Select
+                allowClear
+                value={selectedChartPhanXuongId}
+                onChange={setSelectedChartPhanXuongId}
+                options={phanXuongOptions}
+                placeholder="Lọc theo phân xưởng"
+                className="min-w-[210px]"
+              />
+            }
           >
             <div className="grid min-h-[320px] grid-cols-5 items-end gap-4">
               {(loading ? Array.from({ length: 5 }) : groupSummary).map((item, index) =>
