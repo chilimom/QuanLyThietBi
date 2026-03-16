@@ -156,11 +156,15 @@ const QUICK_LINK_ICON_BACKGROUNDS = [
   'from-violet-500 to-indigo-500',
 ]
 
+const BAO_TRI_CHART_COLORS = ['#f97316', '#fb923c', '#f59e0b', '#facc15', '#fdba74', '#fed7aa']
+
 const Dashboard = () => {
   const { current } = useSelector((state) => state.user)
   const isAdmin = current?.idQuyen === 4
   const [loading, setLoading] = useState(true)
   const [selectedChartPhanXuongId, setSelectedChartPhanXuongId] = useState()
+  const [selectedBaoTriPhanXuongId, setSelectedBaoTriPhanXuongId] = useState()
+  const [hoveredBaoTriIndex, setHoveredBaoTriIndex] = useState(null)
   const [dashboardData, setDashboardData] = useState({
     stats: [],
     nhomList: [],
@@ -315,19 +319,13 @@ const Dashboard = () => {
       .slice(0, 5)
   }, [dashboardData.nhomList, totalSummary])
 
-  const phanXuongSummary = useMemo(() => {
-    return [...dashboardData.stats]
-      .map((item) => ({
-        tenPhanXuong: item.tenPhanXuong || `Phân xưởng ${item.phanXuongId}`,
-        tongSoLuong: item.tongSoLuong || 0,
-        tongBanGhi: item.tongBanGhi || 0,
-      }))
-      .sort((a, b) => b.tongSoLuong - a.tongSoLuong)
-      .slice(0, 6)
-  }, [dashboardData.stats])
+  const filteredBaoTriItems = useMemo(() => {
+    if (!selectedBaoTriPhanXuongId) return dashboardData.vatTuItems
+    return dashboardData.vatTuItems.filter((item) => item.phanXuongId === selectedBaoTriPhanXuongId)
+  }, [dashboardData.vatTuItems, selectedBaoTriPhanXuongId])
 
   const baoTriSummary = useMemo(() => {
-    return dashboardData.vatTuItems
+    return filteredBaoTriItems
       .reduce((acc, item) => {
         const label =
           item.tenPhanXuong ||
@@ -336,17 +334,87 @@ const Dashboard = () => {
         acc[label] = (acc[label] || 0) + 1
         return acc
       }, {})
-  }, [dashboardData.vatTuItems])
+  }, [filteredBaoTriItems])
 
-  const baoTriTopSummary = useMemo(() => {
+  const rawBaoTriTopSummary = useMemo(() => {
     return Object.entries(baoTriSummary)
       .map(([label, value]) => ({ label, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6)
   }, [baoTriSummary])
 
+  const baoTriTopSummary = useMemo(() => {
+    const groupedSummary = filteredBaoTriItems.reduce((acc, item) => {
+      const label = selectedBaoTriPhanXuongId
+        ? item.donVi || item.tenVatTu || item.maVatTu || 'ChÆ°a phÃ¢n loáº¡i'
+        : item.tenPhanXuong || (item.phanXuongId ? `PhÃ¢n xÆ°á»Ÿng ${item.phanXuongId}` : 'ChÆ°a phÃ¢n loáº¡i')
+      acc[label] = (acc[label] || 0) + 1
+      return acc
+    }, {})
+
+    return Object.entries(groupedSummary)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6)
+  }, [filteredBaoTriItems, selectedBaoTriPhanXuongId])
+
+  const baoTriTotal = filteredBaoTriItems.length
+
+  const baoTriChartData = useMemo(() => {
+    if (!baoTriTopSummary.length) return []
+
+    const topItems = baoTriTopSummary.slice(0, 5)
+    const displayedTotal = topItems.reduce((sum, item) => sum + item.value, 0)
+    const remainingTotal = baoTriTotal - displayedTotal
+    const mergedData =
+      remainingTotal > 0 ? [...topItems, { label: 'Nhóm khác', value: remainingTotal }] : topItems
+
+    return mergedData.map((item, index) => ({
+      ...item,
+      color: BAO_TRI_CHART_COLORS[index % BAO_TRI_CHART_COLORS.length],
+      percent: baoTriTotal ? Math.round((item.value / baoTriTotal) * 100) : 0,
+    }))
+  }, [baoTriTopSummary, baoTriTotal])
+
+  const baoTriChartBackground = useMemo(() => {
+    if (!baoTriChartData.length || !baoTriTotal) {
+      return 'conic-gradient(#fed7aa 0deg 360deg)'
+    }
+
+    let currentDegree = 0
+    const segments = baoTriChartData.map((item) => {
+      const degree = (item.value / baoTriTotal) * 360
+      const segment = `${item.color} ${currentDegree}deg ${currentDegree + degree}deg`
+      currentDegree += degree
+      return segment
+    })
+
+    return `conic-gradient(${segments.join(', ')})`
+  }, [baoTriChartData, baoTriTotal])
+
+  const baoTriChartSegments = useMemo(() => {
+    const radius = 84
+    const circumference = 2 * Math.PI * radius
+    let offset = 0
+
+    return baoTriChartData.map((item, index) => {
+      const length = baoTriTotal ? (item.value / baoTriTotal) * circumference : 0
+      const segment = {
+        ...item,
+        index,
+        radius,
+        circumference,
+        strokeDasharray: `${length} ${Math.max(circumference - length, 0)}`,
+        strokeDashoffset: -offset,
+      }
+      offset += length
+      return segment
+    })
+  }, [baoTriChartData, baoTriTotal])
+
+  const activeBaoTriItem = hoveredBaoTriIndex !== null ? baoTriChartSegments[hoveredBaoTriIndex] : null
+
   const highestGroupTotal = groupSummary[0]?.tongSoLuong || 1
-  const highestWorkshopTotal = phanXuongSummary[0]?.tongSoLuong || 1
   const highestBaoTriTotal = baoTriTopSummary[0]?.value || 1
   const totalStatusValue = dashboardData.statusSummary.reduce((sum, item) => sum + item.value, 0) || 1
 
@@ -523,8 +591,6 @@ const Dashboard = () => {
                 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(239,246,255,0.88) 100%)',
             }}
             bodyStyle={{ padding: 24 }}
-            title={<span className="text-base font-semibold text-slate-800">Tổng hợp thiết bị</span>}
-          
             extra={
               <Select
                 allowClear
@@ -535,6 +601,8 @@ const Dashboard = () => {
                 className="min-w-[210px]"
               />
             }
+            title={<span className="text-base font-semibold text-slate-800">Tổng hợp thiết bị</span>}
+          
           >
             <div className="grid min-h-[320px] grid-cols-5 items-end gap-4">
               {(loading ? Array.from({ length: 5 }) : groupSummary).map((item, index) =>
@@ -575,39 +643,115 @@ const Dashboard = () => {
                 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(236,253,245,0.88) 100%)',
             }}
             bodyStyle={{ padding: 24 }}
-            title={<span className="text-base font-semibold text-slate-800">Theo phân xưởng</span>}
+            title={<span className="text-base font-semibold text-slate-800">Thống kê lệnh bảo trì</span>}
+            extra={
+              <Select
+                allowClear
+                value={selectedBaoTriPhanXuongId}
+                onChange={setSelectedBaoTriPhanXuongId}
+                options={phanXuongOptions}
+                placeholder="Lọc theo phân xưởng"
+                className="min-w-[210px]"
+              />
+            }
           >
-            <div className="grid gap-4 md:grid-cols-2">
-              {(loading ? Array.from({ length: 6 }) : phanXuongSummary).map((item, index) =>
-                loading ? (
-                  <Skeleton key={index} active paragraph={{ rows: 2 }} />
-                ) : (
-                  <div
-                    key={item.tenPhanXuong}
-                    className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:bg-white hover:shadow-md"
-                  >
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-slate-800">{item.tenPhanXuong}</div>
-                        <div className="text-sm text-slate-500">{formatNumber(item.tongBanGhi)} bản ghi</div>
-                      </div>
-                      <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500 transition-all duration-300 group-hover:bg-emerald-50 group-hover:text-emerald-700">
-                        {formatNumber(item.tongSoLuong)}
+            {loading ? (
+              <Skeleton active paragraph={{ rows: 8 }} />
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                <div className="rounded-[28px] border border-orange-100 bg-white/80 p-6 shadow-sm">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative flex h-64 w-64 items-center justify-center">
+                      <svg viewBox="0 0 220 220" className="h-full w-full -rotate-90 overflow-visible">
+                        <circle cx="110" cy="110" r="84" fill="none" stroke="#ffedd5" strokeWidth="26" />
+                        {baoTriChartSegments.map((item) => (
+                          <circle
+                            key={item.label}
+                            cx="110"
+                            cy="110"
+                            r={item.radius}
+                            fill="none"
+                            stroke={item.color}
+                            strokeWidth={hoveredBaoTriIndex === item.index ? 34 : 28}
+                            strokeDasharray={item.strokeDasharray}
+                            strokeDashoffset={item.strokeDashoffset}
+                            strokeLinecap="round"
+                            className="origin-center cursor-pointer transition-all duration-300"
+                            style={{
+                              filter:
+                                hoveredBaoTriIndex === item.index
+                                  ? 'drop-shadow(0 10px 18px rgba(249,115,22,0.32))'
+                                  : 'none',
+                              transform: hoveredBaoTriIndex === item.index ? 'scale(1.04)' : 'scale(1)',
+                              transformOrigin: '110px 110px',
+                            }}
+                            onMouseEnter={() => setHoveredBaoTriIndex(item.index)}
+                            onMouseLeave={() => setHoveredBaoTriIndex(null)}
+                          />
+                        ))}
+                      </svg>
+                      <div className="absolute flex h-32 w-32 flex-col items-center justify-center rounded-full bg-white px-3 text-center shadow-[0_10px_30px_rgba(249,115,22,0.12)]">
+                        <div className="text-sm font-semibold text-slate-500">
+                          {activeBaoTriItem ? activeBaoTriItem.label : 'Lệnh bảo trì'}
+                        </div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          {activeBaoTriItem ? `${activeBaoTriItem.percent}% tổng` : 'Tổng số'}
+                        </div>
+                        <div className="mt-1 text-4xl font-bold text-orange-600">
+                          {formatNumber(activeBaoTriItem?.value ?? baoTriTotal)}
+                        </div>
+                        <div className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Lệnh bảo trì
+                        </div>
                       </div>
                     </div>
-                    <div className="h-2 rounded-full bg-white">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-lime-400 transition-all duration-300 group-hover:brightness-110"
-                        style={{ width: `${Math.max((item.tongSoLuong / highestWorkshopTotal) * 100, 10)}%` }}
-                      />
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-slate-700">Cơ cấu theo nhóm thống kê</div>
+                      <div className="mt-1 text-sm text-slate-500">
+                        Biểu đồ tròn tổng hợp các nhóm lệnh bảo trì nhiều nhất
+                      </div>
                     </div>
                   </div>
-                )
-              )}
-            </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {baoTriChartData.map((item, index) => (
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:bg-white hover:shadow-md"
+                      onMouseEnter={() => setHoveredBaoTriIndex(index)}
+                      onMouseLeave={() => setHoveredBaoTriIndex(null)}
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                          <div>
+                            <div className="font-semibold text-slate-800">{item.label}</div>
+                            <div className="text-sm text-slate-500">{item.percent}% tổng lệnh</div>
+                          </div>
+                        </div>
+                        <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500">
+                          {formatNumber(item.value)}
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full bg-white">
+                        <div
+                          className="h-2 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.max((item.value / highestBaoTriTotal) * 100, 10)}%`,
+                            background: `linear-gradient(90deg, ${item.color}, ${item.color}CC)`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </Card>
         </Col>
       </Row>
+
 
       <Row gutter={[16, 16]}>
         <Col xs={24} xl={16}>
