@@ -3,9 +3,9 @@ import path from './path'
 
 const {
   MdOutlineDashboardCustomize,
-  TbCircleNumber1Filled,
-  TbCircleNumber2Filled,
-  TbCircleNumber3Filled,
+  BsBoxSeam,
+  HiOutlineWrenchScrewdriver,
+  MdOutlineDevicesOther,
   FaUser,
   FaUserEdit,
   MdGroups,
@@ -26,21 +26,21 @@ export const HomeSidebar = (current) => [
     id: 1,
     type: 'SINGLE',
     text: 'V\u1eadt T\u01b0 CCDC',
-    icon: <TbCircleNumber1Filled size={24} />,
+    icon: <BsBoxSeam size={20} />,
     path: `/${path.LAYOUT}/${path.MANAGE_TB}`,
   },
   {
     id: 2,
     type: 'SINGLE',
     text: 'T\u1ea1o L\u1ec7nh B\u1ea3o Tr\u00ec',
-    icon: <TbCircleNumber2Filled size={24} />,
+    icon: <HiOutlineWrenchScrewdriver size={22} />,
     path: `/${path.LAYOUT}/${path.MANAGE_VT}`,
   },
   {
     id: 9,
     type: 'SINGLE',
     text: 'Thi\u1ebft B\u1ecb Theo Khu V\u1ef1c',
-    icon: <TbCircleNumber3Filled size={24} />,
+    icon: <MdOutlineDevicesOther size={22} />,
     path: `/${path.LAYOUT}/${path.MANAGE_TB_KHU_VUC}`,
   },
   ...(current?.idQuyen === 4

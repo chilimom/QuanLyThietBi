@@ -7,6 +7,7 @@ import {
   MdOutlineColorLens,
   MdOutlineCategory,
   MdClose,
+  MdOutlineDevicesOther,
 } from 'react-icons/md'
 // import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 import {
@@ -17,8 +18,8 @@ import {
   IoRadioButtonOn,
 } from 'react-icons/io5'
 
-import { HiMiniUserCircle } from 'react-icons/hi2'
-import { BsStar, BsStarFill } from 'react-icons/bs'
+import { HiMiniUserCircle, HiOutlineWrenchScrewdriver } from 'react-icons/hi2'
+import { BsBoxSeam, BsStar, BsStarFill } from 'react-icons/bs'
 import { AiOutlineEye, AiOutlineDownCircle } from 'react-icons/ai'
 import { IoMdMenu, IoIosArrowForward } from 'react-icons/io'
 import { FcGoogle } from 'react-icons/fc'
@@ -70,6 +71,7 @@ const icons = {
   IoBagCheck,
   HiMiniUserCircle,
   IoHome,
+  BsBoxSeam,
   BsStar,
   BsStarFill,
   AiOutlineEye,
@@ -98,12 +100,14 @@ const icons = {
   MdOutlineDashboardCustomize,
   MdOutlineColorLens,
   MdOutlineCategory,
+  MdOutlineDevicesOther,
   IoReturnDownBackSharp,
   MdClose,
   FaUserEdit,
   FaUser,
   FaEye,
   FaSearch,
+  HiOutlineWrenchScrewdriver,
   TbCircleNumber1Filled,
   TbCircleNumber2Filled,
   TbCircleNumber3Filled,

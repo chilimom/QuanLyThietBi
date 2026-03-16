@@ -16,9 +16,9 @@ import { useSelector } from 'react-redux'
 
 const {
   MdOutlineDashboardCustomize,
-  TbCircleNumber1Filled,
-  TbCircleNumber2Filled,
-  TbCircleNumber3Filled,
+  BsBoxSeam,
+  HiOutlineWrenchScrewdriver,
+  MdOutlineDevicesOther,
   FaUser,
   MdOutlineCategory,
   IoBagCheck,
@@ -52,21 +52,21 @@ const QUICK_LINKS = [
     title: 'Thiết bị khu vực',
     description: 'Theo dõi thiết bị theo phân xưởng và khu vực.',
     path: `/${path.LAYOUT}/${path.MANAGE_TB_KHU_VUC}`,
-    icon: <TbCircleNumber3Filled size={26} />,
+    icon: <MdOutlineDevicesOther size={24} />,
     tone: 'from-blue-500 to-cyan-500',
   },
   {
     title: 'Vật tư CCDC',
     description: 'Quản lý dữ liệu vật tư và danh mục dùng chung.',
     path: `/${path.LAYOUT}/${path.MANAGE_TB}`,
-    icon: <TbCircleNumber1Filled size={26} />,
+    icon: <BsBoxSeam size={22} />,
     tone: 'from-emerald-500 to-teal-500',
   },
   {
     title: 'Tạo lệnh bảo trì',
     description: 'Tra cứu và xử lý vật tư cho bảo trì.',
     path: `/${path.LAYOUT}/${path.MANAGE_VT}`,
-    icon: <TbCircleNumber2Filled size={26} />,
+    icon: <HiOutlineWrenchScrewdriver size={24} />,
     tone: 'from-orange-500 to-amber-500',
   },
   {
@@ -141,6 +141,20 @@ const DashboardMetricCard = ({ item, loading, tone }) => (
     )}
   </Card>
 )
+
+const QUICK_LINK_CARD_BACKGROUNDS = [
+  'from-blue-50 via-sky-50 to-cyan-50',
+  'from-emerald-50 via-teal-50 to-cyan-50',
+  'from-orange-50 via-amber-50 to-yellow-50',
+  'from-violet-50 via-indigo-50 to-fuchsia-50',
+]
+
+const QUICK_LINK_ICON_BACKGROUNDS = [
+  'from-blue-500 to-cyan-500',
+  'from-emerald-500 to-teal-500',
+  'from-orange-500 to-amber-500',
+  'from-violet-500 to-indigo-500',
+]
 
 const Dashboard = () => {
   const { current } = useSelector((state) => state.user)
@@ -347,7 +361,7 @@ const Dashboard = () => {
       label: 'Vật tư CCDC',
       value: dashboardData.thietBiCount,
       helper: 'Danh sách vật tư, thiết bị dùng chung',
-      icon: <TbCircleNumber1Filled size={28} />,
+      icon: <BsBoxSeam size={24} />,
     },
     {
       label: 'Lệnh bảo trì',
@@ -414,14 +428,22 @@ const Dashboard = () => {
             </p> */}
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {QUICK_LINKS.map((item) => (
+              {QUICK_LINKS.map((item, index) => (
                 <Link
                   key={item.path}
                   to={item.path}
                   className={`group rounded-2xl bg-gradient-to-br ${item.tone} p-[1px] no-underline shadow-sm transition-transform duration-200 hover:-translate-y-1`}
                 >
-                  <div className="h-full rounded-2xl bg-white/95 p-4">
-                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                  <div
+                    className={`h-full rounded-2xl bg-gradient-to-br ${
+                      QUICK_LINK_CARD_BACKGROUNDS[index % QUICK_LINK_CARD_BACKGROUNDS.length]
+                    } p-4`}
+                  >
+                    <div
+                      className={`mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${
+                        QUICK_LINK_ICON_BACKGROUNDS[index % QUICK_LINK_ICON_BACKGROUNDS.length]
+                      } text-white shadow-sm transition-all duration-300 group-hover:scale-110`}
+                    >
                       {item.icon}
                     </div>
                     <div className="text-base font-semibold text-slate-800">{item.title}</div>
@@ -637,12 +659,12 @@ const Dashboard = () => {
                 {
                   title: 'Rà soát thiết bị theo khu vực',
                   text: 'Ưu tiên kiểm tra các nhóm có số lượng lớn để cập nhật tình trạng kịp thời.',
-                  icon: <TbCircleNumber3Filled size={22} />,
+                  icon: <MdOutlineDevicesOther size={20} />,
                 },
                 {
                   title: 'Kiểm tra vật tư bảo trì',
                   text: 'Theo dõi danh sách vật tư để chuẩn bị cho lệnh bảo trì mới.',
-                  icon: <TbCircleNumber2Filled size={22} />,
+                  icon: <HiOutlineWrenchScrewdriver size={20} />,
                 },
                 {
                   title: 'Cập nhật dữ liệu người dùng',
