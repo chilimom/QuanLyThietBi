@@ -65,7 +65,7 @@ const ModalViewVT = ({ data, onClose }) => {
         <div className="grid grid-cols-2 gap-4 text-sm mb-6">
           <div className="bg-gray-50 p-3 rounded">
             <p className="font-semibold text-gray-600 mb-1">Order:</p>
-            <p className="font-mono text-blue-600">{data.order || '-'}</p>
+            <p className="font-mono text-blue-600">{data.order || 'Cho admin cap order'}</p>
           </div>
           <div className="bg-gray-50 p-3 rounded">
             <p className="font-semibold text-gray-600 mb-1">EQ:</p>
@@ -85,8 +85,12 @@ const ModalViewVT = ({ data, onClose }) => {
             </div>
           </div>
           <div className="bg-gray-50 p-3 rounded">
-            <p className="font-semibold text-gray-600 mb-1">Nhà máy | NV BTBD:</p>
+            <p className="font-semibold text-gray-600 mb-1">Khu vuc | Don vi:</p>
             <p>{data.donVi || '-'}</p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded">
+            <p className="font-semibold text-gray-600 mb-1">So luong yeu cau:</p>
+            <p>{data.soLuong || '1'}</p>
           </div>
           <div className="bg-gray-50 p-3 rounded">
             <p className="font-semibold text-gray-600 mb-1">Ngày tạo:</p>

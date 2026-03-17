@@ -1,10 +1,10 @@
 
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { apiEditVT, phanXuongAPI } from '../../apis'
 import { InputForm, TextAreaForm } from '../'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { RxCross2 } from 'react-icons/rx'
 
@@ -26,8 +26,15 @@ const normalizePhanXuongList = (list) => {
     }))
     .filter((item) => item.PhanXuongId > 0)
 }
+
+const normalizePhanXuongId = (value, fallback = 1) => {
+  const normalized = Number(value)
+  return Number.isFinite(normalized) && normalized > 0 ? normalized : fallback
+}
 const ModalEditVT = ({ render, editNhanVien }) => {
   const dispatch = useDispatch()
+  const { current } = useSelector((state) => state.user)
+  const isAdmin = current?.idQuyen === 4
   const [phanXuongList, setPhanXuongList] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -36,7 +43,56 @@ const ModalEditVT = ({ render, editNhanVien }) => {
     formState: { errors },
     reset,
     handleSubmit,
-  } = useForm()
+    watch,
+    getValues,
+  } = useForm({
+    defaultValues: {
+      id: '',
+      Order: '',
+      Eq: '',
+      TenVT: '',
+      DonVi: '',
+      SoLuong: 1,
+      NgayTao: '',
+      PrMua: '',
+      GhiChu: '',
+      PhanXuongId: 1,
+    },
+  })
+
+  const selectedPhanXuongId = normalizePhanXuongId(
+    watch('PhanXuongId'),
+    normalizePhanXuongId(editNhanVien?.phanXuongId ?? editNhanVien?.PhanXuongId, 1)
+  )
+
+  const resolvedPhanXuongList = useMemo(() => {
+    const currentId = normalizePhanXuongId(editNhanVien?.phanXuongId ?? editNhanVien?.PhanXuongId, 0)
+    const currentName = editNhanVien?.tenPhanXuong ?? editNhanVien?.TenPhanXuong ?? ''
+
+    if (!currentId || phanXuongList.some((item) => item.PhanXuongId === currentId)) {
+      return phanXuongList
+    }
+
+    return [
+      {
+        PhanXuongId: currentId,
+        TenPhanXuong: currentName || `Phân xưởng ${currentId}`,
+      },
+      ...phanXuongList,
+    ]
+  }, [editNhanVien, phanXuongList])
+
+  const selectedPhanXuong = useMemo(
+    () =>
+      resolvedPhanXuongList.find((item) => item.PhanXuongId === selectedPhanXuongId) || {
+        PhanXuongId: selectedPhanXuongId,
+        TenPhanXuong:
+          editNhanVien?.tenPhanXuong ??
+          editNhanVien?.TenPhanXuong ??
+          `Phân xưởng ${selectedPhanXuongId}`,
+      },
+    [editNhanVien, resolvedPhanXuongList, selectedPhanXuongId]
+  )
 
   // Load danh sách phân xưởng
   useEffect(() => {
@@ -62,18 +118,20 @@ const ModalEditVT = ({ render, editNhanVien }) => {
   useEffect(() => {
     if (editNhanVien) {
       const formattedDate = editNhanVien.ngayTao ? editNhanVien.ngayTao.split('T')[0] : ''
+      const phanXuongId = normalizePhanXuongId(editNhanVien.phanXuongId ?? editNhanVien.PhanXuongId, 1)
       console.log('📝 Dữ liệu editNhanVien để edit:', editNhanVien)
       
       reset({
         id: editNhanVien.id || '',
         Order: editNhanVien.order || '',
         Eq: editNhanVien.eq || editNhanVien.Eq || '', // Sửa: Eq thay vì eq
+        SoLuong: Number(editNhanVien.soLuong ?? editNhanVien.SoLuong ?? 1) || 1,
         TenVT: editNhanVien.tenVT || editNhanVien.TenVT || '',
         DonVi: editNhanVien.donVi || editNhanVien.DonVi || '',
         NgayTao: formattedDate,
         PrMua: editNhanVien.prMua || editNhanVien.PrMua || '',
         GhiChu: editNhanVien.ghiChu || editNhanVien.GhiChu || '',
-        PhanXuongId: editNhanVien.phanXuongId || editNhanVien.PhanXuongId || 1, // Thêm PhanXuongId
+        PhanXuongId: phanXuongId,
       })
     }
   }, [editNhanVien, reset])
@@ -88,8 +146,10 @@ const ModalEditVT = ({ render, editNhanVien }) => {
       // Tạo payload đúng với API
       const payload = {
         id: editNhanVien.id,
-        Order: data.Order?.trim() || '',
+        Order: isAdmin ? data.Order?.trim() || '' : editNhanVien.order?.trim() || '',
         Eq: data.Eq?.trim() || '', // Sửa: Eq thay vì eq
+        SoLuong: String(data.SoLuong || 1).trim(),
+        soLuong: String(data.SoLuong || 1).trim(),
         TenVT: data.TenVT?.trim() || '',
         DonVi: data.DonVi?.trim() || '',
         NgayTao: data.NgayTao || new Date().toISOString().split('T')[0],
@@ -180,71 +240,93 @@ const ModalEditVT = ({ render, editNhanVien }) => {
               })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              {phanXuongList.map(px => (
+              {resolvedPhanXuongList.map(px => (
                 <option key={px.PhanXuongId} value={px.PhanXuongId}>
                   {px.PhanXuongId}. {px.TenPhanXuong}
                 </option>
               ))}
             </select>
+            <p className="text-xs text-slate-500">
+              Dang chon: <span className="font-semibold text-slate-700">{selectedPhanXuong?.TenPhanXuong}</span>
+            </p>
             {errors.PhanXuongId && (
               <p className="text-red-500 text-xs mt-1">{errors.PhanXuongId.message}</p>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Cột 1 */}
             <div className="space-y-4">
-              <InputForm
-                label="Số Order *"
-                register={register}
-                errors={errors}
-                id="Order"
-                validate={{
-                  required: 'Vui lòng điền số Order',
-                  minLength: { value: 3, message: 'Order phải có ít nhất 3 ký tự' }
-                }}
-                placeholder="VD: 1034702"
-                fullWith
-              />
+              {isAdmin ? (
+                <InputForm
+                  label="So Order *"
+                  register={register}
+                  errors={errors}
+                  id="Order"
+                  validate={{
+                    required: 'Vui long dien so Order',
+                    minLength: { value: 3, message: 'Order phai co it nhat 3 ky tu' }
+                  }}
+                  placeholder="VD: 1034702"
+                  fullWith
+                />
+              ) : (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  Order hien tai: <span className="font-semibold text-slate-800">{editNhanVien?.order?.trim() || 'Cho admin cap order'}</span>
+                </div>
+              )}
 
               <InputForm
-                label="Mã EQ *"
+                label="So EQ"
                 register={register}
                 errors={errors}
-                id="Eq" // Sửa: Eq thay vì eq
+                id="Eq"
                 validate={{
-                  required: 'Vui lòng điền mã EQ',
-                  minLength: { value: 2, message: 'EQ phải có ít nhất 2 ký tự' }
+                  validate: (value) => !!(value?.trim() || getValues('DonVi')?.trim()) || 'Can nhap so EQ hoac khu vuc',
                 }}
                 placeholder="VD: 1-T03-XNH-07-19-4"
                 fullWith
               />
             </div>
 
-            {/* Cột 2 */}
             <div className="space-y-4">
               <InputForm
-                label="Đơn vị sử dụng *"
+                label="Khu vuc / Don vi su dung"
                 register={register}
                 errors={errors}
                 id="DonVi"
-                validate={{ required: 'Vui lòng điền Đơn vị' }}
-                placeholder="VD: NM.NĐ - Trạm Quang trắc"
+                validate={{
+                  validate: (value) => !!(value?.trim() || getValues('Eq')?.trim()) || 'Can nhap khu vuc hoac so EQ',
+                }}
+                placeholder="VD: Tram Quang Trac, Khu vuc Lo 3..."
                 fullWith
               />
 
               <InputForm
-                label="Ngày Tạo *"
+                label="So luong *"
+                register={register}
+                errors={errors}
+                id="SoLuong"
+                type="number"
+                validate={{
+                  required: 'Vui long nhap so luong',
+                  min: { value: 1, message: 'So luong phai lon hon 0' },
+                  valueAsNumber: true,
+                }}
+                placeholder="VD: 2"
+                fullWith
+              />
+
+              <InputForm
+                label="Ngay tao *"
                 id="NgayTao"
                 type="date"
                 register={register}
                 errors={errors}
-                validate={{ required: 'Vui lòng chọn ngày' }}
+                validate={{ required: 'Vui long chon ngay' }}
                 fullWith
               />
             </div>
           </div>
-
           <InputForm
             label="PR Mua Thay Thế"
             register={register}

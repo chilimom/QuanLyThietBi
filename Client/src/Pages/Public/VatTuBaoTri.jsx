@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImBin, ImFileExcel } from 'react-icons/im'
 import { FaRegEdit, FaEye, FaSyncAlt } from 'react-icons/fa'
 import { Table, Tooltip, Space, Button as AntdButton, Spin, Alert, Modal } from 'antd'
@@ -15,7 +15,7 @@ import {
   Pagination,
   ModalViewVT,
 } from '../../components'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { toast } from 'react-toastify'
 import UseDebouce from '../../hooks/useDebouce'
@@ -34,6 +34,8 @@ const VatTuBaoTri = () => {
   const location = useLocation()
   const [params] = useSearchParams()
   const dispatch = useDispatch()
+  const { current } = useSelector((state) => state.user)
+  const isAdmin = current?.idQuyen === 4
 
   const [vattus, setVattus] = useState([])
   const [counts, setCounts] = useState(0)
@@ -45,6 +47,7 @@ const VatTuBaoTri = () => {
   const [exportLoading, setExportLoading] = useState(false)
   const [phanXuongList, setPhanXuongList] = useState([])
   const [selectedPhanXuongId, setSelectedPhanXuongId] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const [selectedVT, setSelectedVT] = useState(null)
   const [apiError, setApiError] = useState('')
@@ -174,7 +177,7 @@ const VatTuBaoTri = () => {
         
         return {
           id: item.id,
-          order: item.order || '-',
+          order: item.order || '',
           eq: item.eq || '-',
           tenVT: item.tenVT || 'Chưa có tên',
           donVi: item.donVi || '-',
@@ -184,7 +187,8 @@ const VatTuBaoTri = () => {
           phanXuongId: item.phanXuongId,
           tenPhanXuong: item.tenPhanXuong || `Phân xưởng ${item.phanXuongId}`,
           maVT: item.maVT,
-          soLuong: item.soLuong,
+          soLuong: item.soLuong ?? item.SoLuong ?? 1,
+          orderStatus: item.order?.trim() ? 'ready' : 'pending',
           key: uniqueKey
         }
       })
@@ -436,6 +440,7 @@ const VatTuBaoTri = () => {
     setBegind(null)
     setEndd(null)
     setSelectedPhanXuongId('')
+    setStatusFilter('all')
     reset({ q: '' })
     navigate({
       pathname: location.pathname,
@@ -443,6 +448,21 @@ const VatTuBaoTri = () => {
     })
     toast.info('Đã xóa bộ lọc')
   }
+
+  const pendingCount = vattus.filter((item) => item.orderStatus === 'pending').length
+  const pendingRequests = useMemo(
+    () =>
+      vattus
+        .filter((item) => item.orderStatus === 'pending')
+        .sort((a, b) => new Date(b.ngayTao || 0) - new Date(a.ngayTao || 0))
+        .slice(0, 5),
+    [vattus]
+  )
+  const filteredVattus = vattus.filter((item) => {
+    if (statusFilter === 'pending') return item.orderStatus === 'pending'
+    if (statusFilter === 'ready') return item.orderStatus === 'ready'
+    return true
+  })
 
   // ================= COLUMNS =================
   const columns = [
@@ -457,8 +477,32 @@ const VatTuBaoTri = () => {
       title: 'Order', 
       dataIndex: 'order', 
       key: 'order', 
-      width: 120,
-      render: (text) => <span className="font-mono font-semibold text-blue-600">{text?.trim() || '-'}</span>
+      width: 150,
+      render: (text, record) =>
+        record.orderStatus === 'pending' ? (
+          <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+            Chờ cấp order
+          </span>
+        ) : (
+          <span className="font-mono font-semibold text-blue-600">{text?.trim() || '-'}</span>
+        )
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'orderStatus',
+      key: 'orderStatus',
+      width: 140,
+      align: 'center',
+      render: (value) =>
+        value === 'pending' ? (
+          <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+            Chờ admin
+          </span>
+        ) : (
+          <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            Đã có order
+          </span>
+        ),
     },
     { 
       title: 'EQ', 
@@ -480,8 +524,16 @@ const VatTuBaoTri = () => {
         </Tooltip>
       ),
     },
+    {
+      title: 'So luong',
+      dataIndex: 'soLuong',
+      key: 'soLuong',
+      width: 110,
+      align: 'center',
+      render: (value) => <span className="font-semibold text-slate-700">{value || 1}</span>,
+    },
     { 
-      title: 'Nhà máy | NV Bảo Trì', 
+      title: 'Khu vuc | Don vi', 
       dataIndex: 'donVi', 
       key: 'donVi', 
       width: 150,
@@ -609,6 +661,80 @@ const VatTuBaoTri = () => {
         </div>
       </div>
 
+      {isAdmin && (
+        <section className="mb-6 rounded-2xl border border-amber-200 bg-[linear-gradient(135deg,_#fffaf0,_#ffffff)] p-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-xl text-amber-600">
+                  🔔
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-slate-800">Thông tin chờ cấp Order</div>
+                  <div className="text-sm text-slate-500">
+                    
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
+                  {pendingCount} Yêu cầu đang chờ
+                </span>
+                <button
+                  onClick={() => setStatusFilter('pending')}
+                  className="rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50"
+                >
+                  Danh sách
+                </button>
+                <button
+                  onClick={handleManualRefresh}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                >
+                  Làm mới
+                </button>
+              </div>
+            </div>
+
+            <div className="w-full max-w-[540px] rounded-2xl border border-white bg-white/90 p-4">
+              {pendingRequests.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingRequests.map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setSelectedVT(item)
+                        setStatusFilter('pending')
+                      }}
+                      className="flex w-full items-start justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-white hover:shadow-sm"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold text-slate-800">{item.tenVT || 'Yeu cau moi'}</div>
+                        <div className="mt-1 text-sm text-slate-500">
+                          EQ: {item.eq || 'Chua co'} | Khu vuc: {item.donVi || 'Chua co'}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-500">
+                          So luong: {item.soLuong || 1} | Ngay tao: {item.ngayTao ? moment(item.ngayTao).format('DD/MM/YYYY') : '-'}
+                        </div>
+                      </div>
+                      <span className="ml-4 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                        Mo
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+                  <div className="text-sm font-semibold text-slate-700">Chưa có yêu cầu mới</div>
+                  <div className="mt-1 text-sm text-slate-500">
+                    Thông tin tạo order User yêu cầu.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* SEARCH & FILTERS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="w-full md:w-[400px]">
@@ -643,12 +769,44 @@ const VatTuBaoTri = () => {
           </select>
         </div>
         
-        {(begind || endd || queriesDebounce || selectedPhanXuongId) && (
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200'
+            }`}
+          >
+            Tất cả
+          </button>
+          <button
+            onClick={() => setStatusFilter('pending')}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              statusFilter === 'pending'
+                ? 'bg-amber-500 text-white'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
+            }`}
+          >
+            Chờ cấp Order
+          </button>
+          <button
+            onClick={() => setStatusFilter('ready')}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              statusFilter === 'ready'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`}
+          >
+            Đã có Order
+          </button>
+        </div>
+        
+        {(begind || endd || queriesDebounce || selectedPhanXuongId || statusFilter !== 'all') && (
           <button
             onClick={handleClearFilters}
             className="px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
-            ✕ Xóa bộ lọc
+            Xoa bo loc
           </button>
         )}
       </div>
@@ -669,9 +827,9 @@ const VatTuBaoTri = () => {
               ) : (
                 <>
                   <span className="bg-white px-3 py-1 rounded-lg border">
-                    <span className="font-bold text-blue-800 text-lg">{vattus.length}</span> Lệnh bảo trì
+                    <span className="font-bold text-blue-800 text-lg">{filteredVattus.length}</span> Lệnh bảo trì
                   </span>
-                  {counts > vattus.length && (
+                  {counts > filteredVattus.length && (
                     <span className="text-gray-600">
                       (Tổng: <span className="font-bold">{counts}</span> bản ghi)
                     </span>
@@ -679,6 +837,11 @@ const VatTuBaoTri = () => {
                   <span className="text-sm text-gray-500">
                     Trang {page} / {Math.ceil(counts / limit) || 1}
                   </span>
+                  {isAdmin && pendingCount > 0 && (
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
+                      {pendingCount} Yêu cầu chờ cấp Order
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -693,20 +856,22 @@ const VatTuBaoTri = () => {
           <div className="text-sm text-gray-700 bg-white p-4 rounded-lg border min-w-[200px]">
             <div className="grid grid-cols-2 gap-3">
               <div className="font-medium">Hiển thị:</div>
-              <div className="font-semibold text-blue-600">{limit} bản ghi/trang</div>
+              <div className="font-semibold text-blue-600">{limit} Bản ghi/Trang</div>
               
               <div className="font-medium">Tổng số:</div>
-              <div className="font-semibold">{counts} bản ghi</div>
+              <div className="font-semibold">{counts} Bản ghi</div>
+              
+              <div className="font-medium">Chờ order:</div>
+              <div className="font-semibold text-amber-700">{pendingCount}</div>
               
               <div className="font-medium">Trạng thái:</div>
               <div className="font-semibold">
-                {loading ? '🔄 Đang tải' : '✅ Hoàn thành'}
+                {loading ? 'Đang tải' : statusFilter === 'all' ? 'Tất cả' : statusFilter === 'pending' ? 'Chờ cấp Order' : 'Đã có Order'}
               </div>
             </div>
           </div>
         </div>
 
-        
         {apiError && (
           <Alert
             message="Thông báo"
@@ -722,7 +887,7 @@ const VatTuBaoTri = () => {
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <Table
           columns={columns}
-          dataSource={vattus}
+          dataSource={filteredVattus}
           rowKey="key"
           pagination={false}
           scroll={{ 

@@ -3,7 +3,7 @@ import { apiCreateVT, phanXuongAPI } from '../../apis/vattu'
 import { InputForm, TextAreaForm } from '../'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { RxCross2 } from 'react-icons/rx'
 
@@ -30,6 +30,8 @@ const normalizePhanXuongList = (list) => {
 
 const ModalCreateVT = ({ render }) => {
   const dispatch = useDispatch()
+  const { current } = useSelector((state) => state.user)
+  const isAdmin = current?.idQuyen === 4
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [phanXuongList, setPhanXuongList] = useState([])
 
@@ -38,12 +40,14 @@ const ModalCreateVT = ({ render }) => {
     formState: { errors },
     reset,
     handleSubmit,
+    getValues,
   } = useForm({
     defaultValues: {
       Order: '',
       Eq: '',
       TenVT: '',
       DonVi: '',
+      SoLuong: 1,
       NgayTao: new Date().toISOString().split('T')[0],
       PrMua: '',
       GhiChu: '',
@@ -77,9 +81,11 @@ const ModalCreateVT = ({ render }) => {
 
     try {
       const payload = {
-        Order: data.Order?.trim() || '',
+        Order: isAdmin ? data.Order?.trim() || '' : '',
         Eq: data.Eq?.trim() || '',
         TenVT: data.TenVT?.trim() || '',
+        SoLuong: String(data.SoLuong || 1).trim(),
+        soLuong: String(data.SoLuong || 1).trim(),
         DonVi: data.DonVi?.trim() || '',
         NgayTao: data.NgayTao || new Date().toISOString().split('T')[0],
         PrMua: data.PrMua?.trim() || '',
@@ -93,7 +99,9 @@ const ModalCreateVT = ({ render }) => {
       console.log('📥 API Response:', responseTB)
       
       if (responseTB?.status === true || responseTB?.success === true) {
-        const successMessage = responseTB?.message || 'Tạo vật tư thành công!'
+        const successMessage = isAdmin
+          ? responseTB?.message || 'Tạo vật tư thành công!'
+          : 'Đã tạo yêu cầu bảo trì và chuyển admin cấp số order.'
         toast.success(`✅ ${successMessage}`)
         
         // Reset form
@@ -131,7 +139,8 @@ const ModalCreateVT = ({ render }) => {
 
   const handleQuickFill = () => {
     const sampleData = {
-      Order: `TEST-${Date.now().toString().slice(-4)}`,
+      Order: isAdmin ? `TEST-${Date.now().toString().slice(-4)}` : '',
+      SoLuong: 2,
       Eq: `EQ-TEST-${Math.floor(Math.random() * 100)}`,
       TenVT: `Vật tư bảo trì test ${new Date().toLocaleDateString('vi-VN')}`,
       DonVi: 'Phòng Kỹ thuật',
@@ -186,27 +195,32 @@ const ModalCreateVT = ({ render }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
-              <InputForm
-                label="Số Order *"
-                register={register}
-                errors={errors}
-                id="Order"
-                validate={{
-                  required: 'Vui lòng điền số Order',
-                  minLength: { value: 3, message: 'Order phải có ít nhất 3 ký tự' }
-                }}
-                placeholder="VD: 1034702"
-                fullWith
-              />
+              {isAdmin ? (
+                <InputForm
+                  label="So Order *"
+                  register={register}
+                  errors={errors}
+                  id="Order"
+                  validate={{
+                    required: 'Vui long dien so Order',
+                    minLength: { value: 3, message: 'Order phai co it nhat 3 ky tu' }
+                  }}
+                  placeholder="VD: 1034702"
+                  fullWith
+                />
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  Yeu cau nay se duoc tao o trang thai chua co order. Admin se tiep nhan va cap so order sau.
+                </div>
+              )}
 
               <InputForm
-                label="Mã EQ *"
+                label="So EQ"
                 register={register}
                 errors={errors}
                 id="Eq"
                 validate={{
-                  required: 'Vui lòng điền mã EQ',
-                  minLength: { value: 2, message: 'EQ phải có ít nhất 2 ký tự' }
+                  validate: (value) => !!(value?.trim() || getValues('DonVi')?.trim()) || 'Can nhap so EQ hoac khu vuc',
                 }}
                 placeholder="VD: 1-T03-XNH-07-19-4"
                 fullWith
@@ -215,22 +229,39 @@ const ModalCreateVT = ({ render }) => {
 
             <div className="space-y-4">
               <InputForm
-                label="Đơn vị sử dụng *"
+                label="Khu vuc / Don vi su dung"
                 register={register}
                 errors={errors}
                 id="DonVi"
-                validate={{ required: 'Vui lòng điền Đơn vị' }}
-                placeholder="VD: NM.NĐ - Trạm Quang trắc"
+                validate={{
+                  validate: (value) => !!(value?.trim() || getValues('Eq')?.trim()) || 'Can nhap khu vuc hoac so EQ',
+                }}
+                placeholder="VD: Tram Quang Trac, Khu vuc Lo 3..."
                 fullWith
               />
 
               <InputForm
-                label="Ngày Tạo *"
+                label="So luong *"
+                register={register}
+                errors={errors}
+                id="SoLuong"
+                type="number"
+                validate={{
+                  required: 'Vui long nhap so luong',
+                  min: { value: 1, message: 'So luong phai lon hon 0' },
+                  valueAsNumber: true,
+                }}
+                placeholder="VD: 2"
+                fullWith
+              />
+
+              <InputForm
+                label="Ngay tao *"
                 id="NgayTao"
                 type="date"
                 register={register}
                 errors={errors}
-                validate={{ required: 'Vui lòng chọn ngày' }}
+                validate={{ required: 'Vui long chon ngay' }}
                 fullWith
               />
             </div>
