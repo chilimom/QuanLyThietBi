@@ -414,6 +414,14 @@ const Dashboard = () => {
 
   const activeBaoTriItem = hoveredBaoTriIndex !== null ? baoTriChartSegments[hoveredBaoTriIndex] : null
 
+  const selectedBaoTriPhanXuongLabel = useMemo(() => {
+    if (!selectedBaoTriPhanXuongId) return 'Tất cả phân xưởng'
+    return (
+      dashboardData.phanXuongList.find((item) => item.phanXuongId === selectedBaoTriPhanXuongId)?.tenPhanXuong ||
+      `Phân xưởng ${selectedBaoTriPhanXuongId}`
+    )
+  }, [dashboardData.phanXuongList, selectedBaoTriPhanXuongId])
+
   const highestGroupTotal = groupSummary[0]?.tongSoLuong || 1
   const highestBaoTriTotal = baoTriTopSummary[0]?.value || 1
   const totalStatusValue = dashboardData.statusSummary.reduce((sum, item) => sum + item.value, 0) || 1
@@ -433,7 +441,7 @@ const Dashboard = () => {
     },
     {
       label: 'Lệnh bảo trì',
-      value: dashboardData.vatTuCount,
+      value: baoTriTotal,
       helper: 'Sẵn sàng theo dõi theo kỳ và từ khóa',
       icon: <IoBagCheck size={24} />,
     },
@@ -444,6 +452,18 @@ const Dashboard = () => {
       icon: <MdOutlineCategory size={24} />,
     },
   ]
+
+  const resolvedMetrics = metrics.map((item, index) =>
+    index === 2
+      ? {
+          ...item,
+          value: baoTriTotal,
+          helper: selectedBaoTriPhanXuongId
+            ? `Theo dõi lệnh bảo trì tại ${selectedBaoTriPhanXuongLabel}`
+            : 'Sẵn sàng theo dõi theo kỳ và từ khóa',
+        }
+      : item
+  )
 
   const recentColumns = [
     {
@@ -568,7 +588,7 @@ const Dashboard = () => {
       </section>
 
       <Row gutter={[16, 16]}>
-        {metrics.map((item, index) => (
+        {resolvedMetrics.map((item, index) => (
           <Col xs={24} md={12} xl={6} key={item.label}>
             <DashboardMetricCard
               item={item}
@@ -773,7 +793,7 @@ const Dashboard = () => {
                 Xem chi tiết
               </Link>
             }
-          >
+          > 
             <Table
               rowKey={(record) => record.id || `${record.phanXuongId}-${record.maVatTu}-${record.tenVatTu}`}
               columns={recentColumns}
