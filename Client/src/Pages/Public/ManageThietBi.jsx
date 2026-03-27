@@ -21,7 +21,7 @@ import {
   ModalViewTB,
   Pagination,
 } from '../../components'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { showModal } from '../../store/loading/loadingSlice'
 import { toast } from 'react-toastify'
 import UseDebouce from '../../hooks/useDebouce'
@@ -34,12 +34,15 @@ import {
 } from 'react-router-dom'
 
 const { RangePicker } = DatePicker
+const ADMIN_ROLE_ID = 4
 
 const ManageThietBi = () => {
   const { register, watch } = useForm()
   const navigate = useNavigate()
   const location = useLocation()
   const [params] = useSearchParams()
+  const { current } = useSelector((state) => state.user)
+  const isAdmin = current?.idQuyen === ADMIN_ROLE_ID
 
   const [thietbis, setThietbis] = useState([])
   const [counts, setCounts] = useState(0)
@@ -236,14 +239,18 @@ const ManageThietBi = () => {
             className="text-green-600 cursor-pointer hover:scale-110 transition"
             onClick={() => setSelectedTB(r)}
           />
-          <FaRegEdit
-            className="text-blue-600 cursor-pointer hover:scale-110 transition"
-            onClick={() => handleEditTB(r)}
-          />
-          <ImBin
-            className="text-red-600 cursor-pointer hover:scale-110 transition"
-            onClick={() => handleDeleteTB(r.id)}
-          />
+          {isAdmin && (
+            <>
+              <FaRegEdit
+                className="text-blue-600 cursor-pointer hover:scale-110 transition"
+                onClick={() => handleEditTB(r)}
+              />
+              <ImBin
+                className="text-red-600 cursor-pointer hover:scale-110 transition"
+                onClick={() => handleDeleteTB(r.id)}
+              />
+            </>
+          )}
         </Space>
       ),
     },
@@ -253,18 +260,19 @@ const ManageThietBi = () => {
     <div className="w-full text-[13.5px] text-gray-800 font-medium">
       {/* Actions */}
       <Row justify="space-between" align="middle" gutter={[16, 16]} className="mb-3">
-        <Col>
+        {isAdmin && <Col>
           <AntButton type="primary" onClick={handleCreateTB}>
             Thêm thiết bị
           </AntButton>
-        </Col>
+        </Col>}
         <Col>
           <RangePicker format="DD/MM/YYYY" onChange={handleTG} />
         </Col>
         <Col>
           <AntButton
             icon={<ImFileExcel />}
-            onClick={handleExportExcel}
+            onClick={() => isAdmin && handleExportExcel()}
+            className={isAdmin ? '' : 'hidden'}
             style={{ background: '#047857', borderColor: '#047857' }}
           >
             Xuất Excel

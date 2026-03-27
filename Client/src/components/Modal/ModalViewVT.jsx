@@ -3,8 +3,11 @@ import { FiEdit2, FiPackage, FiRefreshCw, FiTrash2 } from 'react-icons/fi'
 import { RxCross2 } from 'react-icons/rx'
 import { apiDeleteXuatVatTu, apiGetXuatVatTuByOrder } from '../../apis/xuatVatTu'
 import ModalEditXuatVT from './ModalEditXuatVT'
+import { useSelector } from 'react-redux'
 
 const ModalViewVT = ({ data, onClose }) => {
+  const { current } = useSelector((state) => state.user)
+  const isAdmin = current?.idQuyen === 4
   const [xuatVatTus, setXuatVatTus] = useState([])
   const [showEdit, setShowEdit] = useState(false)
   const [editVT, setEditVT] = useState(null)
@@ -181,7 +184,7 @@ const ModalViewVT = ({ data, onClose }) => {
                       <td className="border px-3 py-2 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            className="px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 rounded text-sm inline-flex items-center gap-1"
+                            className={`${isAdmin ? 'px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 rounded text-sm inline-flex items-center gap-1' : 'hidden'}`}
                             onClick={() => {
                               setEditVT(vt)
                               setShowEdit(true)
@@ -191,7 +194,7 @@ const ModalViewVT = ({ data, onClose }) => {
                             Sửa
                           </button>
                           <button
-                            className="px-3 py-1 bg-red-600 text-white hover:bg-red-700 rounded text-sm inline-flex items-center gap-1"
+                            className={`${isAdmin ? 'px-3 py-1 bg-red-600 text-white hover:bg-red-700 rounded text-sm inline-flex items-center gap-1' : 'hidden'}`}
                             onClick={() => handleDeleteXuatVT(vt.id)}
                           >
                             <FiTrash2 size={14} />
@@ -214,7 +217,7 @@ const ModalViewVT = ({ data, onClose }) => {
         </div>
       </div>
 
-      {showEdit && editVT && (
+      {isAdmin && showEdit && editVT && (
         <ModalEditXuatVT
           data={editVT}
           onClose={() => {

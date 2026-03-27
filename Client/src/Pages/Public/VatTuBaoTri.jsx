@@ -28,6 +28,8 @@ import {
 } from 'react-router-dom'
 import ModalXuatVatTu from '../../components/Modal/ModalXuatVatTu'
 
+const ADMIN_ROLE_ID = 4
+
 const VatTuBaoTri = () => {
   const { register, formState: { errors }, watch, reset } = useForm()
   const navigate = useNavigate()
@@ -35,7 +37,7 @@ const VatTuBaoTri = () => {
   const [params] = useSearchParams()
   const dispatch = useDispatch()
   const { current } = useSelector((state) => state.user)
-  const isAdmin = current?.idQuyen === 4
+  const isAdmin = current?.idQuyen === ADMIN_ROLE_ID
 
   const [vattus, setVattus] = useState([])
   const [counts, setCounts] = useState(0)
@@ -580,16 +582,16 @@ const VatTuBaoTri = () => {
           </Tooltip>
           <Tooltip title="Sửa">
             <button 
-              className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
-              onClick={() => handleEditVT(r)}
+              className={`${isAdmin ? 'p-2 hover:bg-blue-50 rounded-lg transition-colors' : 'hidden'}`}
+              onClick={() => isAdmin && handleEditVT(r)}
             >
               <FaRegEdit className="text-blue-600 hover:text-blue-800 text-lg" />
             </button>
           </Tooltip>
           <Tooltip title="Xóa">
             <button 
-              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-              onClick={() => handleDeleteVT(r.id)}
+              className={`${isAdmin ? 'p-2 hover:bg-red-50 rounded-lg transition-colors' : 'hidden'}`}
+              onClick={() => isAdmin && handleDeleteVT(r.id)}
             >
               <ImBin className="text-red-600 hover:text-red-800 text-lg" />
             </button>
@@ -597,8 +599,9 @@ const VatTuBaoTri = () => {
           <AntdButton
             type="primary"
             size="small"
-            className="bg-orange-500 hover:bg-orange-600 border-orange-500"
+            className={`${isAdmin ? 'bg-orange-500 hover:bg-orange-600 border-orange-500' : 'hidden'} `}
             onClick={() =>
+              isAdmin &&
               dispatch(showModal({
                 isShowModal: true,
                 modalChildren: <ModalXuatVatTu order={r} />,
@@ -617,12 +620,12 @@ const VatTuBaoTri = () => {
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border">
         <div className="flex flex-wrap items-center gap-4">
-          <Button 
+          {isAdmin && <Button 
             handleOnclick={handleCreateVT}
-            className="min-w-[180px]"
+            style="min-width: 180px"
           >
             ➕ Tạo Lệnh Bảo Trì
-          </Button>
+          </Button>}
           
           {/* Refresh button */}
           <button
@@ -641,7 +644,7 @@ const VatTuBaoTri = () => {
           </div>
           
           {/* Nút Xuất Excel đã fix */}
-          <button
+          {isAdmin && <button
             onClick={handleExportExcel}
             className="px-4 py-2 flex items-center justify-center gap-2 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
             disabled={exportLoading || loading}
@@ -657,7 +660,7 @@ const VatTuBaoTri = () => {
                 Xuất Excel
               </>
             )}
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -914,12 +917,12 @@ const VatTuBaoTri = () => {
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button 
+                  {isAdmin && <Button 
                     handleOnclick={handleCreateVT}
-                    className="min-w-[200px]"
+                    style="min-width: 200px"
                   >
                     ➕ Tạo vật tư đầu tiên
-                  </Button>
+                  </Button>}
                   <button
                     onClick={handleManualRefresh}
                     className="px-6 py-3 border border-blue-300 text-blue-600 hover:bg-blue-50 rounded-lg"

@@ -498,14 +498,17 @@ const ManageThietBiKhuVuc = () => {
       align: 'center',
       render: (_, record) => (
         <Space size="middle">
-          <FaRegEdit className="text-blue-600 cursor-pointer" onClick={() => openEditModal(record)} />
+          <FaRegEdit
+            className={isAdmin ? 'text-blue-600 cursor-pointer' : 'hidden'}
+            onClick={() => isAdmin && openEditModal(record)}
+          />
           <Popconfirm
             title="Xóa thiết bị này?"
             okText="Xoa"
             cancelText="Huy"
             onConfirm={() => handleDelete(record.id)}
           >
-            <ImBin className="text-red-600 cursor-pointer" />
+            <ImBin className={isAdmin ? 'text-red-600 cursor-pointer' : 'hidden'} />
           </Popconfirm>
         </Space>
       ),
@@ -538,7 +541,7 @@ const ManageThietBiKhuVuc = () => {
       width: 140,
       render: (_, record) => (
         <Space>
-          <Button size="small" onClick={() => openEditGroup(record)}>
+          <Button size="small" className={isAdmin ? '' : 'hidden'} onClick={() => isAdmin && openEditGroup(record)}>
             Sửa
           </Button>
           <Popconfirm
@@ -547,7 +550,7 @@ const ManageThietBiKhuVuc = () => {
             cancelText="Huy"
             onConfirm={() => handleDeleteGroup(record.id)}
           >
-            <Button danger size="small">
+            <Button danger size="small" className={isAdmin ? '' : 'hidden'}>
               Xóa
             </Button>
           </Popconfirm>
@@ -563,7 +566,8 @@ const ManageThietBiKhuVuc = () => {
           <Col>
             <Button
               type="primary"
-              onClick={openCreateModal}
+              className={isAdmin ? '' : 'hidden'}
+              onClick={() => isAdmin && openCreateModal()}
               style={{
                 ...toolbarButtonStyle,
                 background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
