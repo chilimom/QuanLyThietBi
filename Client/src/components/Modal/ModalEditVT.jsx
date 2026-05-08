@@ -201,8 +201,8 @@ const ModalEditVT = ({ render, editNhanVien }) => {
 
   return (
     <div
-      className="relative w-full lg:w-[900px] h-auto max-h-[90vh] overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg 
-                 flex flex-col items-center justify-center p-6 animate-slide-down text-[13px] text-gray-700 font-normal"
+      className="relative w-full max-w-[1120px] h-auto max-h-[90vh] overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg 
+                 flex flex-col p-6 md:p-8 animate-slide-down text-[13px] text-gray-700 font-normal"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="absolute p-[2px] flex items-center right-4 top-4 bg-red-500 border border-gray-300 shadow-sm hover:bg-red-600 rounded-md">
@@ -211,7 +211,7 @@ const ModalEditVT = ({ render, editNhanVien }) => {
         </button>
       </div>
       
-      <div className="w-full md:w-2/3 px-2 mx-auto mt-5">
+      <div className="w-full max-w-[980px] px-2 mx-auto mt-5">
         <h2 className="text-2xl font-bold text-center mb-6">✏️ Sửa Lệnh Bảo Trì #{editNhanVien?.id}</h2>
         
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(handleEditVatTu)}>
@@ -254,7 +254,7 @@ const ModalEditVT = ({ render, editNhanVien }) => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             <div className="space-y-4">
               {isAdmin ? (
                 <InputForm
@@ -298,21 +298,6 @@ const ModalEditVT = ({ render, editNhanVien }) => {
                   validate: (value) => !!(value?.trim() || getValues('Eq')?.trim()) || 'Can nhap khu vuc hoac so EQ',
                 }}
                 placeholder="VD: Tram Quang Trac, Khu vuc Lo 3..."
-                fullWith
-              />
-
-              <InputForm
-                label="So luong *"
-                register={register}
-                errors={errors}
-                id="SoLuong"
-                type="number"
-                validate={{
-                  required: 'Vui long nhap so luong',
-                  min: { value: 1, message: 'So luong phai lon hon 0' },
-                  valueAsNumber: true,
-                }}
-                placeholder="VD: 2"
                 fullWith
               />
 
