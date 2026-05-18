@@ -219,7 +219,7 @@ const ModalCreateVT = ({ render }) => {
                 errors={errors}
                 id="Eq"
                 validate={{
-                  validate: (value) => !!(value?.trim() || getValues('DonVi')?.trim()) || 'Can nhap so EQ hoac khu vuc',
+                  validate: (value) => !!(value?.trim() || getValues('DonVi')?.trim()) || 'Cần nhập số EQ hoặc khu vực',
                 }}
                 placeholder="VD: 1-T03-XNH-07-19-4"
                 fullWith
@@ -228,12 +228,12 @@ const ModalCreateVT = ({ render }) => {
 
             <div className="space-y-4">
               <InputForm
-                label="Khu vuc / Don vi su dung"
+                label="Khu vực / Đơn vị sử dụng"
                 register={register}
                 errors={errors}
                 id="DonVi"
                 validate={{
-                  validate: (value) => !!(value?.trim() || getValues('Eq')?.trim()) || 'Can nhap khu vuc hoac so EQ',
+                  validate: (value) => !!(value?.trim() || getValues('Eq')?.trim()) || 'Cần nhập khu vực hoặc số EQ',
                 }}
                 placeholder="VD: Tram Quang Trac, Khu vuc Lo 3..."
                 fullWith
@@ -245,7 +245,7 @@ const ModalCreateVT = ({ render }) => {
                 type="date"
                 register={register}
                 errors={errors}
-                validate={{ required: 'Vui long chon ngay' }}
+                validate={{ required: 'Vui lòng chọn ngày' }}
                 fullWith
               />
             </div>
