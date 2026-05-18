@@ -100,7 +100,7 @@ const ModalCreateVT = ({ render }) => {
       
       if (responseTB?.status === true || responseTB?.success === true) {
         const successMessage = isAdmin
-          ? responseTB?.message || 'Tạo vật tư thành công!'
+          ? responseTB?.message || 'Tạo order thành công!'
           : 'Đã tạo yêu cầu bảo trì và chuyển admin cấp số order.'
         toast.success(`✅ ${successMessage}`)
         
