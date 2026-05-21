@@ -63,7 +63,7 @@ const QUICK_LINKS = [
     tone: 'from-emerald-500 to-teal-500',
   },
   {
-    title: 'Tạo lệnh bảo trì',
+    title: 'Quản Lý Lệnh Bảo Trì',
     description: 'Tra cứu và xử lý vật tư cho bảo trì.',
     path: `/${path.LAYOUT}/${path.MANAGE_VT}`,
     icon: <HiOutlineWrenchScrewdriver size={24} />,
