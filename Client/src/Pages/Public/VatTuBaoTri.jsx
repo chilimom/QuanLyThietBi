@@ -661,7 +661,7 @@ const VatTuBaoTri = () => {
             onClick={handleClearFilters}
             className="px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
-            Xoa bo loc
+            Xoá bộ lọc
           </button>
         )}
       </div>
