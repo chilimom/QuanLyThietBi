@@ -25,7 +25,7 @@ export const HomeSidebar = (current) => [
   {
     id: 1,
     type: 'SINGLE',
-    text: 'Thiết bị',
+    text: 'Quản lý thiết bị',
     icon: <BsBoxSeam size={20} />,
     path: `/${path.LAYOUT}/${path.MANAGE_TB}`,
   },
