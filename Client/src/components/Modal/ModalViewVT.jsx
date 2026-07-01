@@ -91,10 +91,10 @@ const ModalViewVT = ({ data, onClose }) => {
             <p className="font-semibold text-gray-600 mb-1">Khu vuc | Don vi:</p>
             <p>{data.donVi || '-'}</p>
           </div>
-          <div className="bg-gray-50 p-3 rounded">
+          {/* <div className="bg-gray-50 p-3 rounded">
             <p className="font-semibold text-gray-600 mb-1">So luong yeu cau:</p>
             <p>{data.soLuong || '1'}</p>
-          </div>
+          </div> */}
           <div className="bg-gray-50 p-3 rounded">
             <p className="font-semibold text-gray-600 mb-1">Ngày tạo:</p>
             <p>{data.ngayTao ? new Date(data.ngayTao).toLocaleDateString('vi-VN') : 'Chưa có'}</p>
